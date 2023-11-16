@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
+	"time"
 
 	"github.com/mattn/go-sqlite3"
 )
@@ -12,44 +14,66 @@ import (
 const db_fname = "./data/tasks.db"
 
 type Task struct {
-	id int64;
-	name string;
-	description string;
-	completed bool;
+	ID int64
+	Name string
+	Description string
+	Completed bool
+	Created string
+	Tag string
+}
+
+// merge the changed fields to the original task
+func (orig *Task) merge(t Task) {
+	uValues := reflect.ValueOf(&t).Elem()
+	oValues := reflect.ValueOf(orig).Elem()
+	for i := 0; i < uValues.NumField(); i++ {
+		uField := uValues.Field(i).Interface()
+		if oValues.CanSet() {
+			if v, ok := uField.(int64); ok && uField != 0 {
+				oValues.Field(i).SetInt(v)
+			}
+			if v, ok := uField.(string); ok && uField != "" {
+				oValues.Field(i).SetString(v)
+			}
+			if v, ok := uField.(bool); ok {
+				oValues.Field(i).SetBool(v)
+			}
+		}
+	}
+}
+
+func createTask(name string, description string, completed bool, tag string) Task {
+	var task Task
+	task.Name = name
+	task.Description = description
+	task.Completed = completed
+	task.Tag = tag
+	return task
 }
 
 func main() {
+	// delete previous database
 	os.Remove(db_fname)
 
+	// start the database
 	db, err := sql.Open("sqlite3", db_fname)
 	handleErr(err)
 	defer db.Close()
 
-	var sqliteVersion, _, _ = sqlite3.Version()
-	fmt.Println("SQLite version:", sqliteVersion)
+	// this is here because the linter deletes the import
+	var _, _, _ = sqlite3.Version()
 
-	sqlStatement := `
-		CREATE TABLE tasks (id integer not null primary key, name text, description text, completed int);
-		DELETE FROM tasks;
-	`
-	_, err = db.Exec(sqlStatement)
-	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStatement)
-		return
-	}
+	// create the table for tasks
+	createDB(db)
 
-	id1 := addTask(db, "test1", "test1", false)
-	id2 := addTask(db, "test2", "test2", false)
-	_ = addTask(db, "test3", "test3", true)
-	_ = addTask(db, "test4", "test4", true)
+	//TODO remove and use for testing
+	var task1 = createTask("test1", "test1", false, "NULL")
+	task1.ID = addTask(db, task1)
+	id2 := addTask(db, createTask("test2", "test2", false, "NULL"))
+	_ = addTask(db, createTask("test3", "test3", true, "NULL"))
+	_ = addTask(db, createTask("test4", "test4", true, "NULL"))
 	delTask(db, id2)
-	var task Task
-	task.id = id1
-	task.name = "edited"
-	task.description = "also edited"
-	task.completed = true
-	var editedRows = editTask(db, task)
-	fmt.Println("Edited rows", editedRows)
+	_ = editTask(db, task1)
 	var tasks = getTasks(db)
 
 	for _, value := range tasks {
@@ -58,7 +82,6 @@ func main() {
 
 	// transaction, err := db.Begin()
 	// handleErr(err)
-
 
 	// statement, err := transaction.Prepare("INSERT INTO tasks(id, name, description, completed) values(?, ?, ?, ?)")
 	// handleErr(err)
@@ -72,37 +95,33 @@ func main() {
 	// // commit transaction
 	// err = transaction.Commit()
 	// handleErr(err)
-
-	// get tasks
-	// tasks, err := db.Query(`
-	// 	SELECT 
-	// 		id, name, description, completed 
-	// 	FROM 
-	// 		tasks;
-	// `)
-	// handleErr(err)
-	// defer tasks.Close()
-
-	// // print tasks
-	// for tasks.Next() {
-	// 	var task Task
-	// 	err  = tasks.Scan(&task.id, &task.name, &task.description, &task.completed)
-	// 	handleErr(err)
-	// 	fmt.Println(task)
-	// }
-
-	// err  = tasks.Err()
-	// handleErr(err)
 }
 
-func addTask(db *sql.DB, name string, description string, completed bool) int64 {
+func createDB(db *sql.DB) {
+	sqlStatement := `
+		CREATE TABLE "tasks" (
+			"id" INTEGER NOT NULL PRIMARY KEY,
+			"name" TEXT NOT NULL,
+			"description" TEXT,
+			"completed" INTEGER,
+			"created" TEXT,
+			"tag" TEXT
+		);
+		DELETE FROM tasks;
+	`
+	var _, err = db.Exec(sqlStatement)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStatement)
+		return
+	}
+}
+
+func addTask(db *sql.DB, task Task) int64 {
 	sqlStatement := `
 		INSERT INTO 
-			tasks(id, name, description, completed) 
-			values (
-				(SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?
-			);`
-	res, err := db.Exec(sqlStatement, name, description, completed)
+			tasks(id, name, description, completed, tag, created) 
+			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
+	res, err := db.Exec(sqlStatement, task.Name, task.Description, task.Completed, task.Tag, time.Now().Format("2006-01-02_15:04:05"))
 	handleErr(err)
 	id, err := res.LastInsertId()
 	handleErr(err)
@@ -110,21 +129,15 @@ func addTask(db *sql.DB, name string, description string, completed bool) int64 
 }
 
 func delTask(db *sql.DB, id int64) {
-	sqlStatement := `
-		DELETE FROM tasks WHERE id = ?;`
+	sqlStatement := `DELETE FROM tasks WHERE id = ?;`
 	_, err := db.Exec(sqlStatement, id)
 	handleErr(err)
 }
 
 func editTask(db *sql.DB, task Task) int64 {
-	// // get task first
-	// rows, err := db.Query("SELECT FROM tasks WHERE id = ?", id)
-	// handleErr(err)
-	// var task Task
-	// err = rows.Scan(&task.id, &task.name, &task.description, &task.completed)
-	// handleErr(err)
-
-	// // only update updated fields
+	// get existing task
+	var orig = getTask(db, task.ID)
+	orig.merge(task)
 
 	// update task
 	updateStatement := `
@@ -132,20 +145,41 @@ func editTask(db *sql.DB, task Task) int64 {
 		SET 
 			name = ?,
 			description = ?,
-			completed = ?
+			completed = ?,
+			tag = ?,
+			created = ?
 		WHERE id = ?;`
-	res, err := db.Exec(updateStatement, task.name, task.description, task.completed, task.id)
+	res, err := db.Exec(updateStatement, orig.Name, orig.Description, orig.Completed, orig.Tag, orig.Created, orig.ID)
 	handleErr(err)
 	numRows, err := res.RowsAffected()
 	handleErr(err)
 	return numRows
 }
 
+func row2Task(rows *sql.Rows) Task {
+	var task Task
+	var err = rows.Scan(&task.ID, &task.Name, &task.Description, &task.Completed, &task.Tag, &task.Created)
+	handleErr(err)
+	return task
+}
+
+func getTask(db *sql.DB, id int64) Task {
+	var row, err = db.Query(`
+		SELECT id, name, description, completed, tag, created 
+		FROM tasks WHERE id = ?
+		LIMIT 1
+	`, id)
+	handleErr(err)
+	row.Next()
+	defer row.Close()
+	return row2Task(row)
+}
+
 func getTasks(db *sql.DB) []Task {
 	// get tasks
 	rows, err := db.Query(`
 		SELECT 
-			id, name, description, completed 
+			id, name, description, completed, tag, created
 		FROM 
 			tasks;
 	`)
@@ -156,9 +190,7 @@ func getTasks(db *sql.DB) []Task {
 
 	// print tasks
 	for rows.Next() {
-		var task Task
-		err = rows.Scan(&task.id, &task.name, &task.description, &task.completed)
-		handleErr(err)
+		var task = row2Task(rows)
 		tasks = append(tasks, task)
 	}
 
