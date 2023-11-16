@@ -30,7 +30,10 @@ func (t Task) String() string {
 	} else {
 		completed = " "
 	}
-	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n", completed, t.Name, t.Tag, t.Description, t.Created)
+	var parsedTime, err = time.Parse("2006-01-02_15:04:05", t.Created)
+	handleErr(err)
+	var timestr = parsedTime.Format(time.RFC1123)
+	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", completed, t.Name, t.Tag, t.Description, timestr, t.ID)
 }
 
 // merge the changed fields to the original task
@@ -53,15 +56,15 @@ func (orig *Task) merge(t Task) {
 	}
 }
 
-func createTask(db *sql.DB, name string, description string, completed bool, tag string) Task {
-	var task Task
-	task.Name = name
-	task.Description = description
-	task.Completed = completed
-	task.Tag = tag
-	task.ID = addTask(db, task)
-	return task
-}
+// func createTask(db *sql.DB, name string, description string, completed bool, tag string) Task {
+// 	var task Task
+// 	task.Name = name
+// 	task.Description = description
+// 	task.Completed = completed
+// 	task.Tag = tag
+// 	task.ID = addTask(db, task)
+// 	return task
+// }
 
 func main() {
 	// this is here because the linter deletes the import
@@ -132,25 +135,27 @@ func createDB() *sql.DB {
 	return db
 }
 
-func addTask(db *sql.DB, task Task) int64 {
+func addTask(db *sql.DB, name string, description string, completed bool, tag string) error {
 	sqlStatement := `
 		INSERT INTO 
 			tasks(id, name, description, completed, tag, created) 
 			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
-	res, err := db.Exec(sqlStatement, task.Name, task.Description, task.Completed, task.Tag, time.Now().Format("2006-01-02_15:04:05"))
-	handleErr(err)
-	id, err := res.LastInsertId()
-	handleErr(err)
-	return id
+	_, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format("2006-01-02_15:04:05"))
+	// handleErr(err)
+	// id, err := res.LastInsertId()
+	// handleErr(err)
+	// return id
+	return err
 }
 
-func delTask(db *sql.DB, id int64) {
+func delTask(db *sql.DB, id int64) error {
 	sqlStatement := `DELETE FROM tasks WHERE id = ?;`
 	_, err := db.Exec(sqlStatement, id)
 	handleErr(err)
+	return err
 }
 
-func editTask(db *sql.DB, task Task) int64 {
+func editTask(db *sql.DB, task Task) error {
 	// get existing task
 	var orig = getTask(db, task.ID)
 	orig.merge(task)
@@ -167,9 +172,8 @@ func editTask(db *sql.DB, task Task) int64 {
 		WHERE id = ?;`
 	res, err := db.Exec(updateStatement, orig.Name, orig.Description, orig.Completed, orig.Tag, orig.Created, orig.ID)
 	handleErr(err)
-	numRows, err := res.RowsAffected()
-	handleErr(err)
-	return numRows
+	_, err = res.RowsAffected()
+	return err
 }
 
 func row2Task(rows *sql.Rows) Task {
