@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const db_fname = "./data/tasks.db"
@@ -20,6 +20,17 @@ type Task struct {
 	Completed bool
 	Created string
 	Tag string
+}
+
+// Stringer for Task
+func (t Task) String() string {
+	var completed string
+	if t.Completed {
+		completed = "x"
+	} else {
+		completed = " "
+	}
+	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n", completed, t.Name, t.Tag, t.Description, t.Created)
 }
 
 // merge the changed fields to the original task
@@ -42,38 +53,34 @@ func (orig *Task) merge(t Task) {
 	}
 }
 
-func createTask(name string, description string, completed bool, tag string) Task {
+func createTask(db *sql.DB, name string, description string, completed bool, tag string) Task {
 	var task Task
 	task.Name = name
 	task.Description = description
 	task.Completed = completed
 	task.Tag = tag
+	task.ID = addTask(db, task)
 	return task
 }
 
 func main() {
-	// delete previous database
-	os.Remove(db_fname)
-
-	// start the database
-	db, err := sql.Open("sqlite3", db_fname)
-	handleErr(err)
-	defer db.Close()
-
 	// this is here because the linter deletes the import
-	var _, _, _ = sqlite3.Version()
+	// var _, _, _ = sqlite3.Version()
 
-	// create the table for tasks
-	createDB(db)
-
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	//TODO remove and use for testing
-	var task1 = createTask("test1", "test1", false, "NULL")
-	task1.ID = addTask(db, task1)
-	id2 := addTask(db, createTask("test2", "test2", false, "NULL"))
-	_ = addTask(db, createTask("test3", "test3", true, "NULL"))
-	_ = addTask(db, createTask("test4", "test4", true, "NULL"))
-	delTask(db, id2)
-	_ = editTask(db, task1)
+	// create the table for tasks
+	var db = createDB()
+	defer db.Close()
+	// var task1 = createTask(db, "test1", "test1", false, "")
+	// var task2 = createTask(db, "test2", "test2", false, "")
+	// _ = createTask(db, "test3", "test3", true, "")
+	// _ = createTask(db, "test4", "test4", true, "")
+	// delTask(db, task2.ID)
+	// _ = editTask(db, task1)
 	var tasks = getTasks(db)
 
 	for _, value := range tasks {
@@ -97,23 +104,32 @@ func main() {
 	// handleErr(err)
 }
 
-func createDB(db *sql.DB) {
-	sqlStatement := `
-		CREATE TABLE "tasks" (
-			"id" INTEGER NOT NULL PRIMARY KEY,
-			"name" TEXT NOT NULL,
-			"description" TEXT,
-			"completed" INTEGER,
-			"created" TEXT,
-			"tag" TEXT
-		);
-		DELETE FROM tasks;
-	`
-	var _, err = db.Exec(sqlStatement)
-	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStatement)
-		return
+func createDB() *sql.DB {
+	//! delete previous database
+	// os.Remove(db_fname)
+
+	// start the database
+	var db, err = sql.Open("sqlite3", db_fname)
+	handleErr(err)
+
+	if _, err := db.Query("SELECT * FROM tasks"); err == nil {
+		fmt.Println("Found tasks DB!")
+	} else {
+		sqlStatement := `
+			CREATE TABLE "tasks" (
+				"id" INTEGER NOT NULL PRIMARY KEY,
+				"name" TEXT NOT NULL,
+				"description" TEXT,
+				"completed" INTEGER,
+				"created" TEXT,
+				"tag" TEXT
+			);
+			DELETE FROM tasks;
+		`
+		_, err = db.Exec(sqlStatement)
+		handleErr(err)
 	}
+	return db
 }
 
 func addTask(db *sql.DB, task Task) int64 {
