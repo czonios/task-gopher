@@ -11,7 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const db_fname = "./data/tasks.db"
+const db_fname = "../data/tasks.db"
 
 type status int
 
