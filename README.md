@@ -24,20 +24,21 @@ The differences with TaskCLI, at a glance:
 
 ### Build and run
 ##### Clone repository
-Clone this repo in the correct directory - **IMPORTANT**: we use the Go convention of holding packages in `$HOME/go/src/github.com/<username>/<package>`:
+Clone this repo - we use the Go convention of holding packages from GitHub in `$HOME/go/src/github.com/<username>/<package>`:
 ```sh
 git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios
 ```
 
 ##### Set environment variables
-Create a `.env` file in `$HOME/go/src/github.com/czonios/task-gopher`
+Create a `.env` file in the root directory of the project
 Add the following environment variables:
 - `ADDRESS` the address of the server
 - `PORT` the port the server runs on
 
 ##### Start the server
-The following commands start the task-gopher server (on the device that will hold the database). Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work! Since this is the server instance, you can use `http://localhost` for the `ADDRESS`.
+The following commands start the task-gopher server (on the device that will hold the database). Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `.env` for this to work! Since this is the server instance, you can use `http://localhost` for the `ADDRESS`.
 ```sh
+# NOTE: $HOME/go/bin should be in your PATH
 cd $HOME/go/src/github.com/czonios/task-gopher
 go install ./...
 task-gopher serve
@@ -46,12 +47,18 @@ task-gopher serve
 ##### Start a client
 The client can be either in the same machine as the server, or in any other machine that can ping the server. Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work!
 ```sh
+# NOTE: $HOME/go/bin should be in your PATH
 cd $HOME/go/src/github.com/czonios/task-gopher
 go install ./...
 task-gopher --help # will list available commands
 ```
 
 ## Checklist
+
+### Docker containers
+- [x] make server container
+- [ ] make app container
+- [ ] documentation for containers
 
 ### Tests
 - [ ] `task-gopher.go`
