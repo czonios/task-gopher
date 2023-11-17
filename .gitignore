@@ -22,3 +22,4 @@ go.work
 
 # database
 data/*.db
+**/.env
