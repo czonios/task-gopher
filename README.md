@@ -8,10 +8,17 @@ We built a kanban board TUI in a previous [tutorial][kanban-video], so the
 idea here is that we're going to build a task management CLI with [Cobra][cobra] that has Lip Gloss
 styles *and* can be viewed using our kanban board.
 
-*Note: We walk through the code explaining each and every piece of it in the
-[corresponding video](https://youtu.be/yiFhQGJeRJk) for this tutorial. Enjoy!!*
+## Setup
 
-Here's the plan:
+Clone this repo in the correct directory - **IMPORTANT**:
+```sh
+git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios
+```
+
+Create a `.env` file in `$HOME/go/src/github.com/czonios/task-gopher`
+Add the following environment variables:
+- `ADDRESS` the address of the server
+- `PORT` the port the server runs on
 
 ## Checklist
 
@@ -35,10 +42,14 @@ Here's the plan:
 - [x] print to Kanban layout with [Lip Gloss][lipgloss]
 
 ### Tasklist server
-- [ ] add server
-  - [ ] add routes for all CLI commands
-  - [ ] option to create/use local DB or server DB
-  - [ ] add .env file with server addr, port, credentials (if needed)
+- [x] add server
+  - [x] add routes for all CLI commands
+    - [x] addTask
+    - [x] updateTask
+    - [x] deleteTask
+    - [x] listTasks
+    - [x] kanban
+  - [x] add .env file with server addr, port, credentials (if needed)
 
 ### Mobile app
 - [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]

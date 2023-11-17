@@ -203,23 +203,31 @@ var delCmd = &cobra.Command {
 	},
 }
 
+func getTasksFromServer() ([]Task, error){
+	addr := os.Getenv("ADDRESS")
+	port := os.Getenv("PORT")
+	url := addr + ":" + port + "/tasks"
+	
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	// decode response into tasks array
+	var tasks []Task
+	err = json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all your tasks",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		addr := os.Getenv("ADDRESS")
-		port := os.Getenv("PORT")
-		url := addr + ":" + port + "/tasks"
-		
-		resp, err := http.Get(url)
-		if err != nil {
-			return err
-		}
-		// decode response into tasks array
-		var tasks []Task
-		err = json.NewDecoder(resp.Body).Decode(&tasks)
+		tasks, err := getTasksFromServer()
 		if err != nil {
 			return err
 		}
@@ -323,25 +331,30 @@ func setupTable(tasks []Task) table.Model {
 	return t
 }
 
+func filterTasksByStatus(tasks []Task, s status) []Task {
+	var filtered []Task
+	for _, task := range tasks {
+		if task.Status == s {
+			filtered = append(filtered, task)
+		}
+	}
+	return filtered
+}
+
 var kanbanCmd = &cobra.Command{
 	Use:   "kanban",
-	Short: "Interact with your tasks in a Kanban board.",
+	Short: "Interact with your tasks in a Kanban board",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db := createDB()
-		defer db.Close()
-		todos, err := getTasksByStatus(db, todo)
+
+		tasks, err := getTasksFromServer()
 		if err != nil {
 			return err
 		}
-		ipr, err := getTasksByStatus(db, inProgress)
-		if err != nil {
-			return err
-		}
-		finished, err := getTasksByStatus(db, done)
-		if err != nil {
-			return err
-		}
+
+		todos := filterTasksByStatus(tasks, todo)
+		ipr := filterTasksByStatus(tasks, inProgress)
+		finished := filterTasksByStatus(tasks, done)
 
 		todoCol := kancli.NewColumn(tasksToItems(todos), todo, true)
 		iprCol := kancli.NewColumn(tasksToItems(ipr), inProgress, false)
