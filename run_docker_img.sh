@@ -1,2 +1,2 @@
 #!/bin/bash
-docker run --env-file ./.env go-containerized:latest -p 8334
+docker run --name task-gopher-server --env-file ./.env -p 8334:8334 go-containerized:latest
