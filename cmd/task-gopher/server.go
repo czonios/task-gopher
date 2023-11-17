@@ -135,7 +135,6 @@ func handleUpdateTask(c echo.Context) error {
 	desc := body["Desc"].(string)
 	tag := body["Tag"].(string)
 	completed := body["Status"].(string)
-	fmt.Println(completed)
 
 	var status status
 	switch completed {
