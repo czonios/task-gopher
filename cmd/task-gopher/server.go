@@ -13,6 +13,8 @@ import (
 
 var db *sql.DB
 
+// serve starts an echo server
+// It opens the SQLite database and sets up the accepted routes
 func serve(port string) {
 	// create or open the database
 	db = createDB()
@@ -27,15 +29,11 @@ func serve(port string) {
 	e.PUT("/tasks/:id", handleUpdateTask)
 	e.DELETE("/tasks/:id", handleDeleteTask)
 
-	// check which routes are up
-	// for _, route := range e.Routes() {
-	// 	fmt.Println(route.Path)
-	// }
-
 	// start on port
 	e.Logger.Fatal(e.Start(":" + port))
 }
 
+// getJSONRawBody returns the body of a request c in JSON format
 func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 
 	jsonBody := make(map[string]interface{})
@@ -47,6 +45,7 @@ func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 	return jsonBody, nil
 }
 
+// handleGetTasks fetches all tasks from the database and returns them in JSON form in the response
 func handleGetTasks(c echo.Context) error {
 	tasks, err := getTasks(db)
 	if err != nil {
@@ -55,6 +54,7 @@ func handleGetTasks(c echo.Context) error {
 	return c.JSON(http.StatusOK, tasks)
 }
 
+// handleDeleteTask deletes a task from the database and returns its id
 func handleDeleteTask(c echo.Context) error {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -68,11 +68,9 @@ func handleDeleteTask(c echo.Context) error {
 	return c.String(http.StatusOK, fmt.Sprint(id))
 }
 
+// handleAddTask adds a task to the database
+// It gets the task data from the request body in JSON form
 func handleAddTask(c echo.Context) error {
-
-	// fmt.Println(c.Request().Body)
-	// s, _ := io.ReadAll(c.Request().Body)
-	// fmt.Println(string(s))
 	body, err := getJSONRawBody(c)
 
 	if err != nil {
@@ -111,11 +109,9 @@ func handleAddTask(c echo.Context) error {
 	return c.JSON(http.StatusOK, task)
 }
 
+// handleUpdateTask updates a task in the database by its id
+// The id is given in the request parameters and the changed values are given in the request body
 func handleUpdateTask(c echo.Context) error {
-
-	// fmt.Println(c.Request().Body)
-	// s, _ := io.ReadAll(c.Request().Body)
-	// fmt.Println(string(s))
 	body, err := getJSONRawBody(c)
 
 	if err != nil {

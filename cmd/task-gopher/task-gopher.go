@@ -1,3 +1,29 @@
+/*
+A CLI task management tool for ~slaying~ your to do list.
+
+Usage:
+
+	task-gopher [flags]
+	task-gopher [command]
+
+Available Commands:
+
+	add         Add a new task with an optional description and tag
+	completion  Generate the autocompletion script for the specified shell
+	del         Delete a task by its ID
+	deldb       delete all your tasks
+	help        Help about any command
+	kanban      Interact with your tasks in a Kanban board
+	list        List all your tasks
+	serve       create and start a server for the DB
+	update      Update an existing task name, description, tag or completion status by its id
+
+Flags:
+
+	-h, --help   help for task-gopher
+
+Use "task-gopher [command] --help" for more information about a command.
+*/
 package main
 
 import (
@@ -20,6 +46,7 @@ var _ = os.Mkdir(projectDir, os.ModePerm)
 
 type status int
 
+// status enum
 const (
 	todo status = iota
 	inProgress
@@ -30,27 +57,15 @@ func (s status) String() string {
 	return [...]string{"todo", "in progress", "done"}[s]
 }
 
+// A Task is the representation of a task
 type Task struct {
-	ID      int64
-	Name    string
-	Desc    string
-	Status  status
-	Created time.Time
-	Tag     string
+	ID      int64     // unique task ID
+	Name    string    // task title
+	Desc    string    // optional description
+	Status  status    // the status, one of {todo, in progress, done}
+	Created time.Time // timestamp of when the task was created
+	Tag     string    // optional tag for the task
 }
-
-// Stringer for Task
-// func (t Task) String() string {
-// 	var status string
-// 	if t.Status == done {
-// 		status = "x"
-// 	} else if t.Status == inProgress {
-// 		status = "/"
-// 	} else {
-// 		status = " "
-// 	}
-// 	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC3339), t.ID)
-// }
 
 // implement list.Item & list.DefaultItem
 func (t Task) FilterValue() string {
@@ -111,14 +126,6 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
-	/*
-	 * If the device is the host of the DB
-	 * then basically we can call task-gopher serve
-	 * and it should start the server
-	 * otherwise,
-	 * all the CLI commands should use ADDR:PORT
-	 */
-
 	// execute root command
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -127,6 +134,8 @@ func main() {
 
 }
 
+// createDB returns an opened SQLite database that can be used to run queries
+// It creates the directory and the db file, if they don't exist
 func createDB(args ...bool) *sql.DB {
 	var dataDir = projectDir + "/data/"
 	var dbPath = dataDir + dbFname
@@ -147,27 +156,28 @@ func createDB(args ...bool) *sql.DB {
 		// fmt.Println("Found tasks DB!")
 	} else {
 		sqlStatement := `
-			CREATE TABLE "tasks" (
-				"id" INTEGER NOT NULL PRIMARY KEY,
-				"name" TEXT NOT NULL,
-				"description" TEXT,
-				"status" INTEGER,
-				"created" TEXT,
-				"tag" TEXT
-			);
-			DELETE FROM tasks;
-		`
+            CREATE TABLE "tasks" (
+                "id" INTEGER NOT NULL PRIMARY KEY,
+                "name" TEXT NOT NULL,
+                "description" TEXT,
+                "status" INTEGER,
+                "created" TEXT,
+                "tag" TEXT
+            );
+            DELETE FROM tasks;
+        `
 		_, err = db.Exec(sqlStatement)
 		handleErr(err)
 	}
 	return db
 }
 
+// addTask inserts a task into the database
 func addTask(db *sql.DB, name string, description string, completed status, tag string) (int64, error) {
 	sqlStatement := `
-		INSERT INTO 
-			tasks(id, name, description, status, tag, created) 
-			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
+        INSERT INTO 
+            tasks(id, name, description, status, tag, created) 
+            values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
 	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC3339))
 	handleErr(err)
 	id, err := res.LastInsertId()
@@ -175,6 +185,7 @@ func addTask(db *sql.DB, name string, description string, completed status, tag 
 	return id, err
 }
 
+// delTask deletes a task from the database
 func delTask(db *sql.DB, id int64) error {
 	sqlStatement := `DELETE FROM tasks WHERE id = ?;`
 	_, err := db.Exec(sqlStatement, id)
@@ -182,6 +193,7 @@ func delTask(db *sql.DB, id int64) error {
 	return err
 }
 
+// editTask updates an existing task in the database
 func editTask(db *sql.DB, task Task) error {
 	// get existing task
 	var orig = getTask(db, task.ID)
@@ -189,20 +201,21 @@ func editTask(db *sql.DB, task Task) error {
 
 	// update task
 	updateStatement := `
-		UPDATE tasks
-		SET 
-			name = ?,
-			description = ?,
-			status = ?,
-			tag = ?,
-			created = ?
-		WHERE id = ?;`
+        UPDATE tasks
+        SET 
+            name = ?,
+            description = ?,
+            status = ?,
+            tag = ?,
+            created = ?
+        WHERE id = ?;`
 	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC3339), orig.ID)
 	handleErr(err)
 	_, err = res.RowsAffected()
 	return err
 }
 
+// row2Task returns a task scanned from a database row
 func row2Task(rows *sql.Rows) Task {
 	var task Task
 	var timestr string
@@ -213,25 +226,27 @@ func row2Task(rows *sql.Rows) Task {
 	return task
 }
 
+// getTask returns the task with a given id
 func getTask(db *sql.DB, id int64) Task {
 	var row, err = db.Query(`
-		SELECT id, name, description, status, tag, created 
-		FROM tasks WHERE id = ?
-		LIMIT 1
-	`, id)
+        SELECT id, name, description, status, tag, created 
+        FROM tasks WHERE id = ?
+        LIMIT 1
+    `, id)
 	handleErr(err)
 	row.Next()
 	defer row.Close()
 	return row2Task(row)
 }
 
+// getTasks returns all the tasks in the database
 func getTasks(db *sql.DB) ([]Task, error) {
 	// get tasks
 	rows, err := db.Query(`
-		SELECT id, name, description, status, tag, created
-		FROM tasks
-		ORDER BY created ASC;
-	`)
+        SELECT id, name, description, status, tag, created
+        FROM tasks
+        ORDER BY created ASC;
+    `)
 	handleErr(err)
 	defer rows.Close()
 
@@ -247,6 +262,7 @@ func getTasks(db *sql.DB) ([]Task, error) {
 	return tasks, err
 }
 
+// handleErr logs a Fatal error if given a non-nil error
 func handleErr(err error) {
 	if err != nil {
 		log.Fatal(err)
