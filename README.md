@@ -4,7 +4,7 @@
 ![Lint](https://github.com/czonios/task-gopher/actions/workflows/lint.yml/badge.svg)
 
 This project is a task manager/todo application, built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by Task Warrior. It uses an SQLite database to hold the tasks. 
-It is not a fork because I implemented everything from scratch and only copied what I needed (e.g. CLI Kanban stuff). After the initial implementation, I used some conventions from the TaskCLI (e.g. the `status` enum) where I found them more convenient than my version.
+It is not a fork because I implemented everything from scratch and only copied what I needed (e.g. CLI Kanban stuff). After the initial implementation, I used some conventions from the TaskCLI (e.g. using a `status` enum, where I originally used a bool (todo/done)) where I found them more convenient than my version.
 
 ## Requirements
 - Go: the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`
