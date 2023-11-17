@@ -84,31 +84,6 @@ func (s status) Int() int {
 	return int(s)
 }
 
-func getTasksByStatus(db *sql.DB, s status) ([]Task, error) {
-	// get tasks
-	rows, err := db.Query(`
-		SELECT 
-			id, name, description, status, tag, created
-		FROM 
-			tasks
-		WHERE
-			status = ?;
-	`, s)
-	handleErr(err)
-	defer rows.Close()
-
-	var tasks = []Task{}
-
-	// print tasks
-	for rows.Next() {
-		var task = row2Task(rows)
-		tasks = append(tasks, task)
-	}
-
-	err = rows.Err()
-	return tasks, err
-}
-
 // merge the changed fields to the original task
 func (orig *Task) merge(t Task) {
 	uValues := reflect.ValueOf(&t).Elem()
