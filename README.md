@@ -30,8 +30,7 @@ git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czo
 ```
 
 ##### Set environment variables
-Create a `.env` file in the root directory of the project
-Add the following environment variables:
+Create a `.env` file in the root directory of the project, and add the following environment variables:
 - `ADDRESS` the address of the server
 - `PORT` the port the server runs on
 
@@ -45,7 +44,8 @@ task-gopher serve
 ```
 
 ##### Start a client
-The client can be either in the same machine as the server, or in any other machine that can ping the server. Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work!
+The client can be either in the same machine as the server, or in any other machine that can ping the server.
+Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work!
 ```sh
 # NOTE: $HOME/go/bin should be in your PATH
 cd $HOME/go/src/github.com/czonios/task-gopher
@@ -53,7 +53,43 @@ go install ./...
 task-gopher --help # will list available commands
 ```
 
-## Checklist
+### Project layout
+
+```sh
+task-gopher
+├── README.md
+├── cmd
+│   └── task-gopher
+│       ├── cli.go          # Cobra commands and setup for CLI
+│       ├── server.go       # server and routes to interract with the task manager
+│       └── task-gopher.go  # main function, defines task struct, handles initial setup
+├── data
+│   └── tasks.db            # created by the server
+├── go.mod
+```
+
+## Meta
+
+Christos A. Zonios – [czonios.github.io](https://czonios.github.io) – c.zonios (at) uoi (dot) gr
+
+Distributed under the MIT license. See ``LICENSE`` for more information.
+
+[https://github.com/czonios/task-gopher](https://github.com/czonios/task-gopher)
+
+## Contributing
+
+1. Fork it (<https://github.com/czonios/task-gopher/fork>)
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Run the [tests](#tests)
+4. Commit your changes (`git commit -am 'Add some fooBar'`)
+5. Push to the branch (`git push origin feature/fooBar`)
+6. Create a new Pull Request
+
+### Testing
+
+Coming soon
+
+## Next steps
 
 ### Docker containers
 - [x] make server container
@@ -68,24 +104,6 @@ task-gopher --help # will list available commands
 
 ### Mobile app
 - [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]
-
-## Project layout
-
-```sh
-task-gopher
-├── LICENSE
-├── README.md
-├── addtask.sh
-├── cmd
-│   └── task-gopher
-│       ├── cli.go          # Cobra commands and setup for CLI
-│       ├── server.go       # server and routes to interract with the task manager
-│       └── task-gopher.go  # main function, defines task struct, handles initial setup
-├── data
-│   └── tasks.db            # created by the server
-├── go.mod
-└── go.sum
-```
 
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [charm]: https://github.com/charmbracelet/charm
