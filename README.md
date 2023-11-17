@@ -7,7 +7,7 @@
 This project is a CLI task manager/todo application, with a web server built using [Echo][echo], and an SQLite database to hold the task data.
 It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination of the implementation from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
 
-The differences with TaskCLI, in a glance:
+The differences with TaskCLI, at a glance:
 - implemented a server for remotely accessing the tasks
 - added an optional description to the tasks
 - implemented a `deldb` command to clear the database of tasks, that cannot be run remotely
@@ -60,9 +60,21 @@ task-gopher --help # will list available commands
 
 ## Project layout
 
-`cmd/task-gopher/task-gopher.go` - defines task struct, handles initial setup including opening a database and setting data path for our app
-`cmd/task-gopher/cli.go` - implements all Cobra commands and setup for CLI
-`cmd/task-gopher/server.go` - implements the server and routes to interract with the task manager
+```sh
+task-gopher
+├── LICENSE
+├── README.md
+├── addtask.sh
+├── cmd
+│   └── task-gopher
+│       ├── cli.go          # Cobra commands and setup for CLI
+│       ├── server.go       # server and routes to interract with the task manager
+│       └── task-gopher.go  # main function, defines task struct, handles initial setup
+├── data
+│   └── tasks.db            # created by the server
+├── go.mod
+└── go.sum
+```
 
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [charm]: https://github.com/charmbracelet/charm
