@@ -1,6 +1,6 @@
 module task-gopher
 
-go 1.21.4
+go 1.21
 
 require (
 	github.com/charmbracelet/bubbles v0.16.1
