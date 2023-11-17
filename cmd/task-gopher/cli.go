@@ -19,7 +19,7 @@ import (
 	"golang.org/x/term"
 )
 
-var rootCmd = &cobra.Command {
+var rootCmd = &cobra.Command{
 	Use:   "task-gopher",
 	Short: "A CLI task management tool for ~slaying~ your to do list.",
 	Args:  cobra.NoArgs,
@@ -29,15 +29,15 @@ var rootCmd = &cobra.Command {
 }
 
 var serveCmd = &cobra.Command{
-	Use:   "serve",
+	Use:     "serve",
 	Aliases: []string{"server", "start"},
-	Short: "create and start a server for the DB",
-	Args:  cobra.NoArgs,
+	Short:   "create and start a server for the DB",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		
+
 		// Find .env file
 		err := godotenv.Load(projectDir + "/.env")
-		if err != nil{
+		if err != nil {
 			log.Fatalf("Error loading .env file: %s", err)
 		}
 		port := os.Getenv("PORT")
@@ -45,10 +45,10 @@ var serveCmd = &cobra.Command{
 	},
 }
 
-var addCmd = &cobra.Command {
-	Use: "add NAME",
+var addCmd = &cobra.Command{
+	Use:   "add NAME",
 	Short: "Add a new task with an optional description and tag",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// db := createDB()
 		// defer db.Close()
@@ -69,7 +69,7 @@ var addCmd = &cobra.Command {
 			"Status": "%v",
 			"Tag": "%v"
 		}`, args[0], description, todo, tag))
-		
+
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
 		url := addr + ":" + port + "/tasks/add"
@@ -78,13 +78,13 @@ var addCmd = &cobra.Command {
 		// fmt.Println(http.DetectContentType(body))
 		res, err := http.Post(url, "application/json; charset=utf-8", bytes.NewBuffer(body))
 		if err != nil {
-			return err 
+			return err
 		}
 		fmt.Println(res.Status)
 		jsonBody := make(map[string]interface{})
 		err = json.NewDecoder(res.Body).Decode(&jsonBody)
 		if err != nil {
-			return err 
+			return err
 		}
 		newTask, err := json.Marshal(jsonBody)
 		fmt.Println(string(newTask))
@@ -92,10 +92,10 @@ var addCmd = &cobra.Command {
 	},
 }
 
-var updateCmd = &cobra.Command {
-	Use: "update ID",
+var updateCmd = &cobra.Command{
+	Use:   "update ID",
 	Short: "Update an existing task name, description, tag or completion status by its id",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		db := createDB()
 		defer db.Close()
@@ -140,7 +140,7 @@ var updateCmd = &cobra.Command {
 			"Status": "%v",
 			"Tag": "%v"
 		}`, name, description, status, tag))
-		
+
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
 		url := addr + ":" + port + "/tasks/" + fmt.Sprint(id)
@@ -150,7 +150,7 @@ var updateCmd = &cobra.Command {
 		if err != nil {
 			return err
 		}
-	
+
 		// send the request
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -168,13 +168,13 @@ var updateCmd = &cobra.Command {
 	},
 }
 
-var delCmd = &cobra.Command {
-	Use: "del ID",
+var delCmd = &cobra.Command{
+	Use:   "del ID",
 	Short: "Delete a task by its ID",
-	Args: cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// db := createDB()
-		// defer db.Close()		
+		// defer db.Close()
 		var id, err = strconv.Atoi(args[0])
 		if err != nil {
 			return err
@@ -182,7 +182,7 @@ var delCmd = &cobra.Command {
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
 		url := addr + ":" + port + "/tasks/" + fmt.Sprint(id)
-		
+
 		// create a new HTTP client
 		client := &http.Client{}
 
@@ -191,7 +191,7 @@ var delCmd = &cobra.Command {
 		if err != nil {
 			return err
 		}
-	
+
 		// send the request
 		resp, err := client.Do(req)
 		if err != nil {
@@ -203,11 +203,11 @@ var delCmd = &cobra.Command {
 	},
 }
 
-func getTasksFromServer() ([]Task, error){
+func getTasksFromServer() ([]Task, error) {
 	addr := os.Getenv("ADDRESS")
 	port := os.Getenv("PORT")
 	url := addr + ":" + port + "/tasks"
-	
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

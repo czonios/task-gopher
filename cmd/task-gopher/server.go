@@ -31,7 +31,7 @@ func serve(port string) {
 	// for _, route := range e.Routes() {
 	// 	fmt.Println(route.Path)
 	// }
-	
+
 	// start on port
 	e.Logger.Fatal(e.Start(":" + port))
 }
@@ -41,18 +41,18 @@ func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
-   return jsonBody, nil
+	return jsonBody, nil
 }
 
 func handleGetTasks(c echo.Context) error {
-    tasks, err := getTasks(db)
-		if err != nil {
-			return err
+	tasks, err := getTasks(db)
+	if err != nil {
+		return err
 	}
-    return c.JSON(http.StatusOK, tasks)
+	return c.JSON(http.StatusOK, tasks)
 }
 
 func handleDeleteTask(c echo.Context) error {
@@ -63,9 +63,9 @@ func handleDeleteTask(c echo.Context) error {
 	}
 	err = delTask(db, int64(id))
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Could not delete task " + fmt.Sprint(id))
+		return c.String(http.StatusInternalServerError, "Could not delete task "+fmt.Sprint(id))
 	}
-    return c.String(http.StatusOK, fmt.Sprint(id))
+	return c.String(http.StatusOK, fmt.Sprint(id))
 }
 
 func handleAddTask(c echo.Context) error {
@@ -94,7 +94,7 @@ func handleAddTask(c echo.Context) error {
 	default:
 		status = todo
 	}
-	
+
 	if name == "" {
 		return c.String(http.StatusBadRequest, "You must provide a task name")
 	}

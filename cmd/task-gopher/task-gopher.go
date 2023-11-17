@@ -12,8 +12,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 const dbFname = "tasks.db"
+
 var homeDir, _ = os.UserHomeDir()
 var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
 var _ = os.Mkdir(projectDir, os.ModePerm)
@@ -31,12 +31,12 @@ func (s status) String() string {
 }
 
 type Task struct {
-	ID int64
-	Name string
-	Desc string
-	Status status
+	ID      int64
+	Name    string
+	Desc    string
+	Status  status
 	Created time.Time
-	Tag string
+	Tag     string
 }
 
 // Stringer for Task
@@ -105,7 +105,7 @@ func getTasksByStatus(db *sql.DB, s status) ([]Task, error) {
 		tasks = append(tasks, task)
 	}
 
-	err  = rows.Err()
+	err = rows.Err()
 	return tasks, err
 }
 
@@ -132,8 +132,8 @@ func (orig *Task) merge(t Task) {
 func main() {
 	// Find .env file
 	err := godotenv.Load(projectDir + "/.env")
-	if err != nil{
-	 	log.Fatalf("Error loading .env file: %s", err)
+	if err != nil {
+		log.Fatalf("Error loading .env file: %s", err)
 	}
 
 	/*
@@ -268,7 +268,7 @@ func getTasks(db *sql.DB) ([]Task, error) {
 		tasks = append(tasks, task)
 	}
 
-	err  = rows.Err()
+	err = rows.Err()
 	return tasks, err
 }
 
