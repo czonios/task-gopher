@@ -8,6 +8,10 @@ We built a kanban board TUI in a previous [tutorial][kanban-video], so the
 idea here is that we're going to build a task management CLI with [Cobra][cobra] that has Lip Gloss
 styles *and* can be viewed using our kanban board.
 
+## Requirements
+- Go: the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`
+- If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
+
 ## Setup
 
 ##### Clone repository
@@ -85,3 +89,4 @@ task-gopher --help # will list available commands
 [fyne]: https://fyne.io/
 [wails]: https://wails.io/
 [gomobile]: https://pkg.go.dev/golang.org/x/mobile/app
+[zerotier]: https://www.zerotier.com/
