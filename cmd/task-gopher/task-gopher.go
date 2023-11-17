@@ -1,5 +1,5 @@
 /*
-A CLI task management tool for ~slaying~ your to do list.
+A CLI task management tool with remote access capabilities.
 
 Usage:
 

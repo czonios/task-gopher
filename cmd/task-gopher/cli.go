@@ -21,7 +21,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "task-gopher",
-	Short: "A CLI task management tool for ~slaying~ your to do list.",
+	Short: "A CLI task management tool with remote access capabilities.",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -333,6 +333,7 @@ func setupTable(tasks []Task) table.Model {
 	return t
 }
 
+// filterTasksByStatus returns a list of tasks that have the status s
 func filterTasksByStatus(tasks []Task, s status) []Task {
 	var filtered []Task
 	for _, task := range tasks {

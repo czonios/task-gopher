@@ -1,5 +1,5 @@
 # Task Gopher
-> CLI task manager with a web server
+> A CLI task management tool with remote access capabilities.
 
 ![Build](https://github.com/czonios/task-gopher/actions/workflows/go.yml/badge.svg)
 ![Lint](https://github.com/czonios/task-gopher/actions/workflows/lint.yml/badge.svg)
@@ -49,23 +49,20 @@ task-gopher --help # will list available commands
 
 ## Checklist
 
-### Tasklist server
-- [x] add [Echo] server
-  - [x] add routes for all CLI commands
-    - [x] addTask
-    - [x] updateTask
-    - [x] deleteTask
-    - [x] listTasks
-    - [x] kanban
-  - [x] add .env file with server addr, port, credentials (if needed)
+### Tests
+- [ ] `task-gopher.go`
+- [ ] `cli.go`
+- [ ] `server.go`
+- [ ] integration tests
 
 ### Mobile app
 - [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]
 
 ## Project layout
 
-`main.go` - defines task struct, handles initial setup including opening a db and setting data path for our app
-`cmds.go` - does all Cobra commands and setup for CLI
+`cmd/task-gopher/task-gopher.go` - defines task struct, handles initial setup including opening a database and setting data path for our app
+`cmd/task-gopher/cli.go` - implements all Cobra commands and setup for CLI
+`cmd/task-gopher/server.go` - implements the server and routes to interract with the task manager
 
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [charm]: https://github.com/charmbracelet/charm
