@@ -124,6 +124,23 @@ var listCmd = &cobra.Command{
 	},
 }
 
+var dropDBCmd = &cobra.Command{
+	Use:   "deldb",
+	Short: "delete all your tasks",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		db := createDB(true)
+		defer db.Close()
+		tasks, err := getTasks(db)
+		if err != nil {
+			return err
+		}
+		table := setupTable(tasks)
+		fmt.Print(table.View())
+		return nil
+	},
+}
+
 func calculateWidth(min, width int) int {
 	p := width / 10
 	switch min {
@@ -282,4 +299,5 @@ func init() {
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(delCmd)
 	rootCmd.AddCommand(kanbanCmd)
+	rootCmd.AddCommand(dropDBCmd)
 }

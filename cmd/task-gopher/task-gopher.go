@@ -11,7 +11,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const db_fname = "../data/tasks.db"
+
+const dbFname = "tasks.db"
 
 type status int
 
@@ -177,12 +178,21 @@ func main() {
 	// handleErr(err)
 }
 
-func createDB() *sql.DB {
-	//! delete previous database
-	// os.Remove(db_fname)
+func createDB(args ...bool) *sql.DB {
+	homeDir, _ := os.UserHomeDir()
+	var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher/data/"
+	var dbPath = projectDir + dbFname
+	_ = os.Mkdir(projectDir, os.ModePerm)
+
+	if len(args) > 0 {
+		delete := args[0]
+		if delete {
+			os.Remove(dbPath)
+		}
+	}
 
 	// start the database
-	var db, err = sql.Open("sqlite3", db_fname)
+	var db, err = sql.Open("sqlite3", dbPath)
 	handleErr(err)
 
 	if _, err := db.Query("SELECT * FROM tasks"); err == nil {
