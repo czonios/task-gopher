@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -47,6 +48,7 @@ func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 
 // handleGetTasks fetches all tasks from the database and returns them in JSON form in the response
 func handleGetTasks(c echo.Context) error {
+	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	tasks, err := getTasks(db)
 	if err != nil {
 		return err
@@ -56,6 +58,7 @@ func handleGetTasks(c echo.Context) error {
 
 // handleDeleteTask deletes a task from the database and returns its id
 func handleDeleteTask(c echo.Context) error {
+	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -71,6 +74,7 @@ func handleDeleteTask(c echo.Context) error {
 // handleAddTask adds a task to the database
 // It gets the task data from the request body in JSON form
 func handleAddTask(c echo.Context) error {
+	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	body, err := getJSONRawBody(c)
 
 	if err != nil {
@@ -112,6 +116,7 @@ func handleAddTask(c echo.Context) error {
 // handleUpdateTask updates a task in the database by its id
 // The id is given in the request parameters and the changed values are given in the request body
 func handleUpdateTask(c echo.Context) error {
+	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	body, err := getJSONRawBody(c)
 
 	if err != nil {
