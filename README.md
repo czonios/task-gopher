@@ -4,6 +4,10 @@
 ![Build](https://github.com/czonios/task-gopher/actions/workflows/go.yml/badge.svg)
 ![Lint](https://github.com/czonios/task-gopher/actions/workflows/lint.yml/badge.svg)
 
+<p align="center">
+  <img width=300 src="./assets/logo.png">
+</p>
+
 This project is a CLI task manager/todo application, with a web server built using [Echo][echo], and an SQLite database to hold the task data.
 It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination of the implementation from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
 
