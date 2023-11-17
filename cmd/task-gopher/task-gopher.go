@@ -40,8 +40,9 @@ import (
 
 const dbFname = "tasks.db"
 
-var homeDir, _ = os.UserHomeDir()
-var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
+// var homeDir, _ = os.UserHomeDir()
+// var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
+var projectDir = "."
 var _ = os.Mkdir(projectDir, os.ModePerm)
 
 type status int
@@ -121,9 +122,11 @@ func (orig *Task) merge(t Task) {
 
 func main() {
 	// Find .env file
-	err := godotenv.Load(projectDir + "/.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+	_ = godotenv.Load(projectDir + "/.env")
+	port := os.Getenv("PORT")
+	addr := os.Getenv("ADDRESS")
+	if port == "" || addr == "" {
+		log.Fatalf("Environment variables not set!")
 	}
 
 	// execute root command

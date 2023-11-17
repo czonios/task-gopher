@@ -36,11 +36,12 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Find .env file
-		err := godotenv.Load(projectDir + "/.env")
-		if err != nil {
-			log.Fatalf("Error loading .env file: %s", err)
-		}
+		_ = godotenv.Load(projectDir + "/.env")
 		port := os.Getenv("PORT")
+		addr := os.Getenv("ADDRESS")
+		if port == "" || addr == "" {
+			log.Fatalf("Environment variables not set!")
+		}
 		serve(port)
 	},
 }
