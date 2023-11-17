@@ -8,11 +8,15 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 
 const dbFname = "tasks.db"
+var homeDir, _ = os.UserHomeDir()
+var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
+var _ = os.Mkdir(projectDir, os.ModePerm)
 
 type status int
 
@@ -36,17 +40,17 @@ type Task struct {
 }
 
 // Stringer for Task
-func (t Task) String() string {
-	var status string
-	if t.Status == done {
-		status = "x"
-	} else if t.Status == inProgress {
-		status = "/"
-	} else {
-		status = " "
-	}
-	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC1123), t.ID)
-}
+// func (t Task) String() string {
+// 	var status string
+// 	if t.Status == done {
+// 		status = "x"
+// 	} else if t.Status == inProgress {
+// 		status = "/"
+// 	} else {
+// 		status = " "
+// 	}
+// 	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC1123), t.ID)
+// }
 
 // implement list.Item & list.DefaultItem
 func (t Task) FilterValue() string {
@@ -125,64 +129,33 @@ func (orig *Task) merge(t Task) {
 	}
 }
 
-// func createTask(db *sql.DB, name string, description string, completed bool, tag string) Task {
-// 	var task Task
-// 	task.Name = name
-// 	task.Desc = description
-// 	task.Status = completed
-// 	task.Tag = tag
-// 	task.ID = addTask(db, task)
-// 	return task
-// }
-
 func main() {
-	// this is here because the linter deletes the import
-	// var _, _, _ = sqlite3.Version()
+	// Find .env file
+	err := godotenv.Load(projectDir + "/.env")
+	if err != nil{
+	 	log.Fatalf("Error loading .env file: %s", err)
+	}
 
+	/*
+	 * If the device is the host of the DB
+	 * then basically we can call task-gopher serve
+	 * and it should start the server
+	 * otherwise,
+	 * all the CLI commands should use ADDR:PORT
+	 */
+
+	// execute root command
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	//TODO remove and use for testing
-	// create the table for tasks
-	var db = createDB()
-	defer db.Close()
-	// var task1 = createTask(db, "test1", "test1", false, "")
-	// var task2 = createTask(db, "test2", "test2", false, "")
-	// _ = createTask(db, "test3", "test3", true, "")
-	// _ = createTask(db, "test4", "test4", true, "")
-	// delTask(db, task2.ID)
-	// _ = editTask(db, task1)
-	// var tasks []Task
-	// var tasks, err = getTasks(db)
-	// handleErr(err)
 
-	// for _, value := range tasks {
-	// 	fmt.Println(value)
-	// }
-
-	// transaction, err := db.Begin()
-	// handleErr(err)
-
-	// statement, err := transaction.Prepare("INSERT INTO tasks(id, name, description, completed) values(?, ?, ?, ?)")
-	// handleErr(err)
-	
-	// defer statement.Close()
-	// // add tasks using transcation
-	// for i := 0; i < 5; i++ {
-	// 	_, err = statement.Exec(1, "test", "some desc", 0)
-	// 	handleErr(err)
-	// }
-	// // commit transaction
-	// err = transaction.Commit()
-	// handleErr(err)
 }
 
 func createDB(args ...bool) *sql.DB {
-	homeDir, _ := os.UserHomeDir()
-	var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher/data/"
-	var dbPath = projectDir + dbFname
-	_ = os.Mkdir(projectDir, os.ModePerm)
+	var dataDir = projectDir + "/data/"
+	var dbPath = dataDir + dbFname
+	_ = os.Mkdir(dataDir, os.ModePerm)
 
 	if len(args) > 0 {
 		delete := args[0]
@@ -215,17 +188,16 @@ func createDB(args ...bool) *sql.DB {
 	return db
 }
 
-func addTask(db *sql.DB, name string, description string, completed status, tag string) error {
+func addTask(db *sql.DB, name string, description string, completed status, tag string) (int64, error) {
 	sqlStatement := `
 		INSERT INTO 
 			tasks(id, name, description, status, tag, created) 
 			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
-	_, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC1123))
-	// handleErr(err)
-	// id, err := res.LastInsertId()
-	// handleErr(err)
-	// return id
-	return err
+	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC1123))
+	handleErr(err)
+	id, err := res.LastInsertId()
+	handleErr(err)
+	return id, err
 }
 
 func delTask(db *sql.DB, id int64) error {

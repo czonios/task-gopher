@@ -24,23 +24,34 @@ Here's the plan:
   - [x] get tasks
 
 ### Make a CLI with Cobra
-- [ ] add CLI
-  - [ ] add task
-  - [ ] delete task
-  - [ ] edit task
-  - [ ] get tasks
+- [x] add CLI
+  - [x] add task
+  - [x] delete task
+  - [x] edit task
+  - [x] get tasks
 
 ### Add a little... *je ne sais quoi*
-- [ ] print to table layout with [Lip Gloss][lipgloss]
-- [ ] print to Kanban layout with [Lip Gloss][lipgloss]
+- [x] print to table layout with [Lip Gloss][lipgloss]
+- [x] print to Kanban layout with [Lip Gloss][lipgloss]
+
+### Tasklist server
+- [ ] add server
+  - [ ] add routes for all CLI commands
+  - [ ] option to create/use local DB or server DB
+  - [ ] add .env file with server addr, port, credentials (if needed)
+
+### Mobile app
+- [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]
 
 ## Project layout
 
-`db.go` - here is our custom `task` struct and data layer
-`main.go` - handles initial setup including opening a db and setting data path for our app
+`main.go` - defines task struct, handles initial setup including opening a db and setting data path for our app
 `cmds.go` - does all Cobra commands and setup for CLI
 
 [lipgloss]: https://github.com/charmbracelet/lipgloss
 [charm]: https://github.com/charmbracelet/charm
 [cobra]: https://github.com/spf13/cobra
 [kanban-video]: https://www.youtube.com/watch?v=ZA93qgdLUzM&list=PLLLtqOZfy0pcFoSIeGXO-SOaP9qLqd_H6
+[fyne]: https://fyne.io/
+[wails]: https://wails.io/
+[gomobile]: https://pkg.go.dev/golang.org/x/mobile/app

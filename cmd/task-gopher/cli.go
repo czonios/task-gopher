@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -12,6 +15,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/kancli"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -25,13 +29,30 @@ var rootCmd = &cobra.Command {
 	},
 }
 
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Aliases: []string{"server", "start"},
+	Short: "create and start a server for the DB",
+	Args:  cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		
+		// Find .env file
+		err := godotenv.Load(projectDir + "/.env")
+		if err != nil{
+			log.Fatalf("Error loading .env file: %s", err)
+		}
+		port := os.Getenv("PORT")
+		serve(port)
+	},
+}
+
 var addCmd = &cobra.Command {
 	Use: "add NAME",
 	Short: "Add a new task with an optional description and tag",
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db := createDB()
-		defer db.Close()
+		// db := createDB()
+		// defer db.Close()
 		var description, tag string
 		var err error
 		description, err = cmd.Flags().GetString("description")
@@ -42,7 +63,33 @@ var addCmd = &cobra.Command {
 		if err != nil {
 			return err
 		}
-		return addTask(db, args[0], description, todo, tag)
+		// JSON body
+		body := []byte(fmt.Sprintf(`{
+			"Name": "%v",
+			"Desc": "%v",
+			"Status": "%v",
+			"Tag": "%v"
+		}`, args[0], description, todo, tag))
+		
+		addr := os.Getenv("ADDRESS")
+		port := os.Getenv("PORT")
+		url := addr + ":" + port + "/tasks/add"
+		// fmt.Println(url)
+		// fmt.Println(string(body))
+		// fmt.Println(http.DetectContentType(body))
+		res, err := http.Post(url, "application/json; charset=utf-8", bytes.NewBuffer(body))
+		if err != nil {
+			return err 
+		}
+		fmt.Println(res.Status)
+		jsonBody := make(map[string]interface{})
+		err = json.NewDecoder(res.Body).Decode(&jsonBody)
+		if err != nil {
+			return err 
+		}
+		newTask, err := json.Marshal(jsonBody)
+		fmt.Println(string(newTask))
+		return err
 	},
 }
 
@@ -112,9 +159,18 @@ var listCmd = &cobra.Command{
 	Short: "List all your tasks",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db := createDB()
-		defer db.Close()	
-		tasks, err := getTasks(db)
+
+		addr := os.Getenv("ADDRESS")
+		port := os.Getenv("PORT")
+		url := addr + ":" + port + "/tasks"
+		
+		resp, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		// decode response into tasks array
+		var tasks []Task
+		err = json.NewDecoder(resp.Body).Decode(&tasks)
 		if err != nil {
 			return err
 		}
@@ -258,6 +314,7 @@ func tasksToItems(tasks []Task) []list.Item {
 }
 
 func init() {
+	// add cmd flags
 	addCmd.Flags().StringP(
 		"tag",
 		"t",
@@ -270,8 +327,7 @@ func init() {
 		"",
 		"specify a description for your task",
 	)
-	rootCmd.AddCommand(addCmd)
-	rootCmd.AddCommand(listCmd)
+	// update cmd flags
 	updateCmd.Flags().StringP(
 		"name",
 		"n",
@@ -296,8 +352,12 @@ func init() {
 		int(todo),
 		"specify a completion status for your task (0/1/2 for todo/in progress/done)",
 	)
+	// add all commands
+	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(delCmd)
 	rootCmd.AddCommand(kanbanCmd)
 	rootCmd.AddCommand(dropDBCmd)
+	rootCmd.AddCommand(serveCmd)
 }
