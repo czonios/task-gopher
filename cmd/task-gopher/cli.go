@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
@@ -134,8 +133,38 @@ var updateCmd = &cobra.Command {
 			status = todo
 		}
 
-		newTask := Task{int64(id), name, description, status, time.Now(), tag}
-		return editTask(db, newTask)
+		// JSON body
+		body := []byte(fmt.Sprintf(`{
+			"Name": "%v",
+			"Desc": "%v",
+			"Status": "%v",
+			"Tag": "%v"
+		}`, name, description, status, tag))
+		
+		addr := os.Getenv("ADDRESS")
+		port := os.Getenv("PORT")
+		url := addr + ":" + port + "/tasks/" + fmt.Sprint(id)
+
+		// create a new PUT request
+		req, err := http.NewRequest("PUT", url, bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
+	
+		// send the request
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		fmt.Println(res.Status)
+		if res.StatusCode == 200 {
+			fmt.Println("Updated task", id)
+		} else {
+			fmt.Println("Something went wrong")
+		}
+		return nil
 	},
 }
 
@@ -144,13 +173,33 @@ var delCmd = &cobra.Command {
 	Short: "Delete a task by its ID",
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		db := createDB()
-		defer db.Close()		
+		// db := createDB()
+		// defer db.Close()		
 		var id, err = strconv.Atoi(args[0])
 		if err != nil {
 			return err
 		}
-		return delTask(db, int64(id))
+		addr := os.Getenv("ADDRESS")
+		port := os.Getenv("PORT")
+		url := addr + ":" + port + "/tasks/" + fmt.Sprint(id)
+		
+		// create a new HTTP client
+		client := &http.Client{}
+
+		// create a new DELETE request
+		req, err := http.NewRequest("DELETE", url, nil)
+		if err != nil {
+			return err
+		}
+	
+		// send the request
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		fmt.Println("Deleted task", id)
+		return nil
 	},
 }
 
