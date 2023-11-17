@@ -1,16 +1,10 @@
 # task-gopher
 
-This project is inspired by the incredible work on Task Warrior, an open source
-CLI task manager. I use this project quite a bit for managing my projects
-without leaving the safety and comfort of my terminal. (⌐■_■)
-
-We built a kanban board TUI in a previous [tutorial][kanban-video], so the
-idea here is that we're going to build a task management CLI with [Cobra][cobra] that has Lip Gloss
-styles *and* can be viewed using our kanban board.
+This project is a task manager/todo application, built as a continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by Task Warrior. It uses an SQLite database to hold the tasks. 
 
 ## Requirements
 - Go: the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`
-- If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
+- If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, with static IP addresses, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
 
 ## Setup
 
@@ -44,25 +38,6 @@ task-gopher --help # will list available commands
 ```
 
 ## Checklist
-
-### Data storage
-- [x] set up a (SQLite?) database
-  - [x] open DB
-  - [x] add task
-  - [x] delete task
-  - [x] edit task
-  - [x] get tasks
-
-### Make a CLI with Cobra
-- [x] add CLI
-  - [x] add task
-  - [x] delete task
-  - [x] edit task
-  - [x] get tasks
-
-### Add a little... *je ne sais quoi*
-- [x] print to table layout with [Lip Gloss][lipgloss]
-- [x] print to Kanban layout with [Lip Gloss][lipgloss]
 
 ### Tasklist server
 - [x] add server

@@ -49,7 +49,7 @@ type Task struct {
 // 	} else {
 // 		status = " "
 // 	}
-// 	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC1123), t.ID)
+// 	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC3339), t.ID)
 // }
 
 // implement list.Item & list.DefaultItem
@@ -193,7 +193,7 @@ func addTask(db *sql.DB, name string, description string, completed status, tag 
 		INSERT INTO 
 			tasks(id, name, description, status, tag, created) 
 			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
-	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC1123))
+	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC3339))
 	handleErr(err)
 	id, err := res.LastInsertId()
 	handleErr(err)
@@ -222,7 +222,7 @@ func editTask(db *sql.DB, task Task) error {
 			tag = ?,
 			created = ?
 		WHERE id = ?;`
-	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC1123), orig.ID)
+	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC3339), orig.ID)
 	handleErr(err)
 	_, err = res.RowsAffected()
 	return err
@@ -233,7 +233,7 @@ func row2Task(rows *sql.Rows) Task {
 	var timestr string
 	var err = rows.Scan(&task.ID, &task.Name, &task.Desc, &task.Status, &task.Tag, &timestr)
 	handleErr(err)
-	task.Created, err = time.Parse(time.RFC1123, timestr)
+	task.Created, err = time.Parse(time.RFC3339, timestr)
 	handleErr(err)
 	return task
 }
@@ -253,10 +253,9 @@ func getTask(db *sql.DB, id int64) Task {
 func getTasks(db *sql.DB) ([]Task, error) {
 	// get tasks
 	rows, err := db.Query(`
-		SELECT 
-			id, name, description, status, tag, created
-		FROM 
-			tasks;
+		SELECT id, name, description, status, tag, created
+		FROM tasks
+		ORDER BY created ASC;
 	`)
 	handleErr(err)
 	defer rows.Close()

@@ -300,9 +300,10 @@ func setupTable(tasks []Task) table.Model {
 
 	columns := []table.Column{
 		{Title: "ID", Width: calculateWidth(XS, w)},
-		{Title: "Name", Width: calculateWidth(LG, w)},
-		{Title: "Tag", Width: calculateWidth(MD, w)},
-		{Title: "Status", Width: calculateWidth(SM, w)},
+		{Title: "Name", Width: calculateWidth(MD, w)},
+		{Title: "Tag", Width: calculateWidth(SM, w)},
+		{Title: "Status", Width: calculateWidth(MD, w)},
+		{Title: "Description", Width: calculateWidth(MD, w)},
 		{Title: "Created At", Width: calculateWidth(MD, w)},
 	}
 	var rows []table.Row
@@ -312,7 +313,8 @@ func setupTable(tasks []Task) table.Model {
 			task.Name,
 			task.Tag,
 			task.Status.String(),
-			task.Created.Format("2 Jan 2006, 15:04:05"),
+			task.Desc,
+			task.Created.Format("2 Jan 2006"),
 		})
 	}
 	t := table.New(
