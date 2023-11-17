@@ -13,27 +13,95 @@ import (
 
 const db_fname = "./data/tasks.db"
 
+type status int
+
+const (
+	todo status = iota
+	inProgress
+	done
+)
+
+func (s status) String() string {
+	return [...]string{"todo", "in progress", "done"}[s]
+}
+
 type Task struct {
 	ID int64
 	Name string
-	Description string
-	Completed bool
-	Created string
+	Desc string
+	Status status
+	Created time.Time
 	Tag string
 }
 
 // Stringer for Task
 func (t Task) String() string {
-	var completed string
-	if t.Completed {
-		completed = "x"
+	var status string
+	if t.Status == done {
+		status = "x"
+	} else if t.Status == inProgress {
+		status = "/"
 	} else {
-		completed = " "
+		status = " "
 	}
-	var parsedTime, err = time.Parse("2006-01-02_15:04:05", t.Created)
+	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", status, t.Name, t.Tag, t.Desc, t.Created.Format(time.RFC1123), t.ID)
+}
+
+// implement list.Item & list.DefaultItem
+func (t Task) FilterValue() string {
+	return t.Name
+}
+
+func (t Task) Title() string {
+	return t.Name
+}
+
+func (t Task) Description() string {
+	return t.Tag
+}
+
+// implement kancli.Status
+func (s status) Next() int {
+	if s == done {
+		return int(todo)
+	}
+	return int(s + 1)
+}
+
+func (s status) Prev() int {
+	if s == todo {
+		return int(done)
+	}
+	return int(s - 1)
+}
+
+func (s status) Int() int {
+	return int(s)
+}
+
+func getTasksByStatus(db *sql.DB, s status) ([]Task, error) {
+	// get tasks
+	rows, err := db.Query(`
+		SELECT 
+			id, name, description, status, tag, created
+		FROM 
+			tasks
+		WHERE
+			status = ?;
+	`, s)
 	handleErr(err)
-	var timestr = parsedTime.Format(time.RFC1123)
-	return fmt.Sprintf("- [%v] %v\n\tTag: %v\n\tDescription: %v\n\tCreated at: %v\n\tID: %v", completed, t.Name, t.Tag, t.Description, timestr, t.ID)
+	defer rows.Close()
+
+	var tasks = []Task{}
+
+	// print tasks
+	for rows.Next() {
+		var task = row2Task(rows)
+		tasks = append(tasks, task)
+	}
+
+	err  = rows.Err()
+	return tasks, err
 }
 
 // merge the changed fields to the original task
@@ -49,8 +117,8 @@ func (orig *Task) merge(t Task) {
 			if v, ok := uField.(string); ok && uField != "" {
 				oValues.Field(i).SetString(v)
 			}
-			if v, ok := uField.(bool); ok {
-				oValues.Field(i).SetBool(v)
+			if v, ok := uField.(status); ok && uField != todo {
+				oValues.Field(i).SetInt(int64(v))
 			}
 		}
 	}
@@ -59,8 +127,8 @@ func (orig *Task) merge(t Task) {
 // func createTask(db *sql.DB, name string, description string, completed bool, tag string) Task {
 // 	var task Task
 // 	task.Name = name
-// 	task.Description = description
-// 	task.Completed = completed
+// 	task.Desc = description
+// 	task.Status = completed
 // 	task.Tag = tag
 // 	task.ID = addTask(db, task)
 // 	return task
@@ -84,11 +152,13 @@ func main() {
 	// _ = createTask(db, "test4", "test4", true, "")
 	// delTask(db, task2.ID)
 	// _ = editTask(db, task1)
-	var tasks = getTasks(db)
+	// var tasks []Task
+	// var tasks, err = getTasks(db)
+	// handleErr(err)
 
-	for _, value := range tasks {
-		fmt.Println(value)
-	}
+	// for _, value := range tasks {
+	// 	fmt.Println(value)
+	// }
 
 	// transaction, err := db.Begin()
 	// handleErr(err)
@@ -116,14 +186,14 @@ func createDB() *sql.DB {
 	handleErr(err)
 
 	if _, err := db.Query("SELECT * FROM tasks"); err == nil {
-		fmt.Println("Found tasks DB!")
+		// fmt.Println("Found tasks DB!")
 	} else {
 		sqlStatement := `
 			CREATE TABLE "tasks" (
 				"id" INTEGER NOT NULL PRIMARY KEY,
 				"name" TEXT NOT NULL,
 				"description" TEXT,
-				"completed" INTEGER,
+				"status" INTEGER,
 				"created" TEXT,
 				"tag" TEXT
 			);
@@ -135,12 +205,12 @@ func createDB() *sql.DB {
 	return db
 }
 
-func addTask(db *sql.DB, name string, description string, completed bool, tag string) error {
+func addTask(db *sql.DB, name string, description string, completed status, tag string) error {
 	sqlStatement := `
 		INSERT INTO 
-			tasks(id, name, description, completed, tag, created) 
+			tasks(id, name, description, status, tag, created) 
 			values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
-	_, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format("2006-01-02_15:04:05"))
+	_, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC1123))
 	// handleErr(err)
 	// id, err := res.LastInsertId()
 	// handleErr(err)
@@ -166,11 +236,11 @@ func editTask(db *sql.DB, task Task) error {
 		SET 
 			name = ?,
 			description = ?,
-			completed = ?,
+			status = ?,
 			tag = ?,
 			created = ?
 		WHERE id = ?;`
-	res, err := db.Exec(updateStatement, orig.Name, orig.Description, orig.Completed, orig.Tag, orig.Created, orig.ID)
+	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC1123), orig.ID)
 	handleErr(err)
 	_, err = res.RowsAffected()
 	return err
@@ -178,14 +248,17 @@ func editTask(db *sql.DB, task Task) error {
 
 func row2Task(rows *sql.Rows) Task {
 	var task Task
-	var err = rows.Scan(&task.ID, &task.Name, &task.Description, &task.Completed, &task.Tag, &task.Created)
+	var timestr string
+	var err = rows.Scan(&task.ID, &task.Name, &task.Desc, &task.Status, &task.Tag, &timestr)
+	handleErr(err)
+	task.Created, err = time.Parse(time.RFC1123, timestr)
 	handleErr(err)
 	return task
 }
 
 func getTask(db *sql.DB, id int64) Task {
 	var row, err = db.Query(`
-		SELECT id, name, description, completed, tag, created 
+		SELECT id, name, description, status, tag, created 
 		FROM tasks WHERE id = ?
 		LIMIT 1
 	`, id)
@@ -195,11 +268,11 @@ func getTask(db *sql.DB, id int64) Task {
 	return row2Task(row)
 }
 
-func getTasks(db *sql.DB) []Task {
+func getTasks(db *sql.DB) ([]Task, error) {
 	// get tasks
 	rows, err := db.Query(`
 		SELECT 
-			id, name, description, completed, tag, created
+			id, name, description, status, tag, created
 		FROM 
 			tasks;
 	`)
@@ -215,8 +288,7 @@ func getTasks(db *sql.DB) []Task {
 	}
 
 	err  = rows.Err()
-	handleErr(err)
-	return tasks
+	return tasks, err
 }
 
 func handleErr(err error) {

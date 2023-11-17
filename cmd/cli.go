@@ -1,9 +1,19 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"strconv"
+	"time"
 
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/kancli"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var rootCmd = &cobra.Command {
@@ -32,7 +42,7 @@ var addCmd = &cobra.Command {
 		if err != nil {
 			return err
 		}
-		return addTask(db, args[0], description, false, tag)
+		return addTask(db, args[0], description, todo, tag)
 	},
 }
 
@@ -49,26 +59,36 @@ var updateCmd = &cobra.Command {
 			return err
 		}
 
-		var description, tag string
-		var completed bool
-		description, err = cmd.Flags().GetString("description")
+		name, err := cmd.Flags().GetString("name")
 		if err != nil {
 			return err
 		}
-		tag, err = cmd.Flags().GetString("tag")
+
+		description, err := cmd.Flags().GetString("description")
 		if err != nil {
 			return err
 		}
-		completed, err = cmd.Flags().GetBool("completed")
+		tag, err := cmd.Flags().GetString("tag")
 		if err != nil {
 			return err
 		}
-		var task Task
-		task.ID = int64(id)
-		task.Tag = tag
-		task.Completed = completed
-		task.Description = description
-		return editTask(db, task)
+		completed, err := cmd.Flags().GetInt("status")
+		if err != nil {
+			return err
+		}
+
+		var status status
+		switch completed {
+		case int(inProgress):
+			status = inProgress
+		case int(done):
+			status = done
+		default:
+			status = todo
+		}
+
+		newTask := Task{int64(id), name, description, status, time.Now(), tag}
+		return editTask(db, newTask)
 	},
 }
 
@@ -87,6 +107,139 @@ var delCmd = &cobra.Command {
 	},
 }
 
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all your tasks",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		db := createDB()
+		defer db.Close()	
+		tasks, err := getTasks(db)
+		if err != nil {
+			return err
+		}
+		table := setupTable(tasks)
+		fmt.Print(table.View())
+		return nil
+	},
+}
+
+func calculateWidth(min, width int) int {
+	p := width / 10
+	switch min {
+	case XS:
+		if p < XS {
+			return XS
+		}
+		return p / 2
+
+	case SM:
+		if p < SM {
+			return SM
+		}
+		return p / 2
+	case MD:
+		if p < MD {
+			return MD
+		}
+		return p * 2
+	case LG:
+		if p < LG {
+			return LG
+		}
+		return p * 3
+	default:
+		return p
+	}
+}
+
+const (
+	XS int = 1
+	SM int = 3
+	MD int = 5
+	LG int = 10
+)
+
+func setupTable(tasks []Task) table.Model {
+	// get term size
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		// we don't really want to fail it...
+		log.Println("unable to calculate height and width of terminal")
+	}
+
+	columns := []table.Column{
+		{Title: "ID", Width: calculateWidth(XS, w)},
+		{Title: "Name", Width: calculateWidth(LG, w)},
+		{Title: "Tag", Width: calculateWidth(MD, w)},
+		{Title: "Status", Width: calculateWidth(SM, w)},
+		{Title: "Created At", Width: calculateWidth(MD, w)},
+	}
+	var rows []table.Row
+	for _, task := range tasks {
+		rows = append(rows, table.Row{
+			fmt.Sprintf("%d", task.ID),
+			task.Name,
+			task.Tag,
+			task.Status.String(),
+			task.Created.Format("2 Jan 2006, 15:04:05"),
+		})
+	}
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(false),
+		table.WithHeight(len(tasks)),
+	)
+	s := table.DefaultStyles()
+	s.Header = s.Header.
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		BorderBottom(true).
+		Bold(false)
+	t.SetStyles(s)
+	return t
+}
+
+var kanbanCmd = &cobra.Command{
+	Use:   "kanban",
+	Short: "Interact with your tasks in a Kanban board.",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		db := createDB()
+		defer db.Close()
+		todos, err := getTasksByStatus(db, todo)
+		if err != nil {
+			return err
+		}
+		ipr, err := getTasksByStatus(db, inProgress)
+		if err != nil {
+			return err
+		}
+		finished, err := getTasksByStatus(db, done)
+		if err != nil {
+			return err
+		}
+
+		todoCol := kancli.NewColumn(tasksToItems(todos), todo, true)
+		iprCol := kancli.NewColumn(tasksToItems(ipr), inProgress, false)
+		doneCol := kancli.NewColumn(tasksToItems(finished), done, false)
+		board := kancli.NewDefaultBoard([]kancli.Column{todoCol, iprCol, doneCol})
+		p := tea.NewProgram(board)
+		_, err = p.Run()
+		return err
+	},
+}
+
+// convert tasks to items for a list
+func tasksToItems(tasks []Task) []list.Item {
+	var items []list.Item
+	for _, t := range tasks {
+		items = append(items, t)
+	}
+	return items
+}
+
 func init() {
 	addCmd.Flags().StringP(
 		"tag",
@@ -101,7 +254,7 @@ func init() {
 		"specify a description for your task",
 	)
 	rootCmd.AddCommand(addCmd)
-	// rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(listCmd)
 	updateCmd.Flags().StringP(
 		"name",
 		"n",
@@ -120,13 +273,13 @@ func init() {
 		"",
 		"specify a description for your task",
 	)
-	updateCmd.Flags().BoolP(
-		"completed",
-		"c",
-		false,
-		"specify a completion status for your task (0/1 or true/false)",
+	updateCmd.Flags().IntP(
+		"status",
+		"s",
+		int(todo),
+		"specify a completion status for your task (0/1/2 for todo/in progress/done)",
 	)
 	rootCmd.AddCommand(updateCmd)
 	rootCmd.AddCommand(delCmd)
-	// rootCmd.AddCommand(kanbanCmd)
+	rootCmd.AddCommand(kanbanCmd)
 }
