@@ -38,17 +38,6 @@ var serveCmd = &cobra.Command{
 	},
 }
 
-var desktopCmd = &cobra.Command{
-	Use:     "gui",
-	Aliases: []string{"app", "desktop"},
-	Short:   "start a GUI client",
-	Args:    cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		log.Fatalln("Not implemented yet!")
-		// startGUI()
-	},
-}
-
 var addCmd = &cobra.Command{
 	Use:   "add NAME",
 	Short: "Add a new task with an optional description and tag",
@@ -424,5 +413,4 @@ func init() {
 	rootCmd.AddCommand(kanbanCmd)
 	rootCmd.AddCommand(dropDBCmd)
 	rootCmd.AddCommand(serveCmd)
-	rootCmd.AddCommand(desktopCmd)
 }
