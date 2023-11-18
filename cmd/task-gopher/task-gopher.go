@@ -182,9 +182,13 @@ func addTask(db *sql.DB, name string, description string, completed status, tag 
             tasks(id, name, description, status, tag, created) 
             values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
 	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC3339))
-	handleErr(err)
+	if err != nil {
+		return 0, err
+	}
 	id, err := res.LastInsertId()
-	handleErr(err)
+	if err != nil {
+		return 0, err
+	}
 	return id, err
 }
 
@@ -192,14 +196,19 @@ func addTask(db *sql.DB, name string, description string, completed status, tag 
 func delTask(db *sql.DB, id int64) error {
 	sqlStatement := `DELETE FROM tasks WHERE id = ?;`
 	_, err := db.Exec(sqlStatement, id)
-	handleErr(err)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
 // editTask updates an existing task in the database
 func editTask(db *sql.DB, task Task) error {
 	// get existing task
-	var orig = getTask(db, task.ID)
+	var orig, err = getTask(db, task.ID)
+	if err != nil {
+		return err
+	}
 	orig.merge(task)
 
 	// update task
@@ -213,33 +222,45 @@ func editTask(db *sql.DB, task Task) error {
             created = ?
         WHERE id = ?;`
 	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC3339), orig.ID)
-	handleErr(err)
+	if err != nil {
+		return err
+	}
 	_, err = res.RowsAffected()
 	return err
 }
 
 // row2Task returns a task scanned from a database row
-func row2Task(rows *sql.Rows) Task {
+func row2Task(rows *sql.Rows) (Task, error) {
 	var task Task
 	var timestr string
 	var err = rows.Scan(&task.ID, &task.Name, &task.Desc, &task.Status, &task.Tag, &timestr)
-	handleErr(err)
+	if err != nil {
+		return Task{}, err
+	}
 	task.Created, err = time.Parse(time.RFC3339, timestr)
-	handleErr(err)
-	return task
+	if err != nil {
+		return Task{}, err
+	}
+	return task, nil
 }
 
 // getTask returns the task with a given id
-func getTask(db *sql.DB, id int64) Task {
+func getTask(db *sql.DB, id int64) (Task, error) {
 	var row, err = db.Query(`
         SELECT id, name, description, status, tag, created 
         FROM tasks WHERE id = ?
         LIMIT 1
     `, id)
-	handleErr(err)
+	if err != nil {
+		return Task{}, err
+	}
 	row.Next()
 	defer row.Close()
-	return row2Task(row)
+	task, err := row2Task(row)
+	if err != nil {
+		return Task{}, err
+	}
+	return task, nil
 }
 
 // getTasks returns all the tasks in the database
@@ -250,14 +271,19 @@ func getTasks(db *sql.DB) ([]Task, error) {
         FROM tasks
         ORDER BY created ASC;
     `)
-	handleErr(err)
+	if err != nil {
+		return []Task{}, err
+	}
 	defer rows.Close()
 
 	var tasks = []Task{}
 
 	// print tasks
 	for rows.Next() {
-		var task = row2Task(rows)
+		task, err := row2Task(rows)
+		if err != nil {
+			return []Task{}, err
+		}
 		tasks = append(tasks, task)
 	}
 

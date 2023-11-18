@@ -108,7 +108,10 @@ func handleAddTask(c echo.Context) error {
 	}
 
 	// get the task
-	task := getTask(db, id)
+	task, err := getTask(db, id)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Could not create task")
+	}
 
 	return c.JSON(http.StatusOK, task)
 }

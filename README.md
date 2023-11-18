@@ -120,7 +120,9 @@ task-gopher
 
 ### Testing
 
-Coming soon
+```sh
+go test ./...
+```
 
 ## Next steps
 
