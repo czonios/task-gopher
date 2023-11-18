@@ -1,5 +1,6 @@
 #!/bin/bash
-docker build . -t go-containerized:latest
+cd ..
+docker build . -t go-containerized:latest -f ./build/dockerfile
 echo "---------------"
 echo " "
 echo "Docker images found:"

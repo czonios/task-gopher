@@ -19,53 +19,62 @@ The differences with TaskCLI, at a glance:
 ## Setup
 
 ### Requirements
-- Go: the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`
-- If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, with static IP addresses, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
+- [Go](https://go.dev/learn/): the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`. If you use Docker, you don't need to install it.
+- (optional) [Docker](https://docs.docker.com/get-docker/): if you prefer to run the app in a container, scripts are included for building and running the app in a Docker container
+- (optional) Server node: If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, with static IP addresses, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
 
 ### Build and run
-##### Clone repository
+#### Clone repository
 Clone this repo - we use the Go convention of holding packages from GitHub in `$HOME/go/src/github.com/<username>/<package>`:
 ```sh
 git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios
 ```
 
-##### Set environment variables
+#### Set environment variables
 Create a `.env` file in the root directory of the project, and add the following environment variables:
 - `ADDRESS` the address of the server
 - `PORT` the port the server runs on
 
-##### Start the server
+#### Start the server
 The following commands start the task-gopher server (on the device that will hold the database). Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `.env` for this to work! Since this is the server instance, you can use `http://localhost` for the `ADDRESS`.
+
+##### Option 1: using Go
 ```sh
-# NOTE: $HOME/go/bin should be in your PATH
+# cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
 go install ./...
 task-gopher serve
+# NOTE: $HOME/go/bin should be in your PATH
+# otherwise you can run go run ./... serve
 ```
 
-##### Start a client
+##### Option 2: using Docker
+```sh
+# cd to root directory of project
+cd $HOME/go/src/github.com/czonios/task-gopher
+cd build
+bash build_docker_img.sh
+cd ../scripts
+bash run_docker_img.sh
+```
+
+#### Start a client
 The client can be either in the same machine as the server, or in any other machine that can ping the server.
 Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work!
+
+##### Option 1: using Go
 ```sh
-# NOTE: $HOME/go/bin should be in your PATH
+# cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
 go install ./...
 task-gopher --help # will list available commands
+# NOTE: $HOME/go/bin should be in your PATH
+# otherwise you can run go run ./... serve
 ```
 
-### Project layout
-
+##### Option 2: using Docker
 ```sh
-task-gopher
-├── README.md
-├── cmd
-│   └── task-gopher
-│       ├── cli.go          # Cobra commands and setup for CLI
-│       ├── server.go       # server and routes to interract with the task manager
-│       └── task-gopher.go  # main function, defines task struct, handles initial setup
-├── data
-│   └── tasks.db            # created by the server
-├── go.mod
+# coming soon!
 ```
 
 ## Meta
@@ -84,6 +93,30 @@ Distributed under the MIT license. See ``LICENSE`` for more information.
 4. Commit your changes (`git commit -am 'Add some fooBar'`)
 5. Push to the branch (`git push origin feature/fooBar`)
 6. Create a new Pull Request
+
+### Project layout
+
+```sh
+task-gopher
+├── LICENSE
+├── README.md
+├── assets
+│   └── logo.png
+├── build
+│   ├── build_docker_img.sh     # script for building the docker image
+│   └── dockerfile
+├├── cmd
+│   └── task-gopher
+│       ├── cli.go              # Cobra commands and setup for CLI
+│       ├── server.go           # server and routes to interract with the task manager
+│       └── task-gopher.go      # main function, Task struct, handles initial setup
+├── data
+│   └── tasks.db                # created by the server
+├── go.mod
+└── scripts
+    ├── run_docker_daemon.sh    # script for running the docker container as a daemon on startup
+    └── run_docker_img.sh       # script for normal docker run
+```
 
 ### Testing
 
