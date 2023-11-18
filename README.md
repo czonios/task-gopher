@@ -31,7 +31,8 @@ git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czo
 ```
 
 #### Set environment variables
-Create a `.env` file in the root directory of the project, and add the following environment variables:
+
+The application tries to read a `.env` file in the root directory of the project and load the environment variables it contains. The `.env` file is optional, but the following environment variables must be set:
 - `ADDRESS` the address of the server
 - `PORT` the port the server runs on
 
@@ -132,10 +133,8 @@ go test ./...
 - [ ] documentation for containers
 
 ### Tests
-- [ ] `task-gopher.go`
-- [ ] `cli.go`
+- [x] `task-gopher.go`
 - [ ] `server.go`
-- [ ] integration tests
 
 ### Mobile app
 - [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]

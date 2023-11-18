@@ -272,7 +272,7 @@ func getTasks(db *sql.DB) ([]Task, error) {
         ORDER BY created ASC;
     `)
 	if err != nil {
-		return []Task{}, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -282,7 +282,7 @@ func getTasks(db *sql.DB) ([]Task, error) {
 	for rows.Next() {
 		task, err := row2Task(rows)
 		if err != nil {
-			return []Task{}, err
+			return nil, err
 		}
 		tasks = append(tasks, task)
 	}

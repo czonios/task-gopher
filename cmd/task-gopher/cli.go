@@ -14,7 +14,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/kancli"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -34,9 +33,6 @@ var serveCmd = &cobra.Command{
 	Short:   "create and start a server for the DB",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		// Find .env file
-		_ = godotenv.Load(projectDir + "/.env")
 		port := os.Getenv("PORT")
 		addr := os.Getenv("ADDRESS")
 		if port == "" || addr == "" {
@@ -74,9 +70,6 @@ var addCmd = &cobra.Command{
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
 		url := addr + ":" + port + "/tasks/add"
-		// fmt.Println(url)
-		// fmt.Println(string(body))
-		// fmt.Println(http.DetectContentType(body))
 		res, err := http.Post(url, "application/json; charset=utf-8", bytes.NewBuffer(body))
 		if err != nil {
 			return err
@@ -87,8 +80,7 @@ var addCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		newTask, err := json.Marshal(jsonBody)
-		fmt.Println(string(newTask))
+		_, err = json.Marshal(jsonBody)
 		return err
 	},
 }
@@ -199,7 +191,6 @@ var delCmd = &cobra.Command{
 			return err
 		}
 		defer resp.Body.Close()
-		fmt.Println("Deleted task", id)
 		return nil
 	},
 }
