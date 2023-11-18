@@ -55,9 +55,7 @@ task-gopher serve
 # cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
 cd build
-bash build_docker_img.sh
-cd ../scripts
-bash run_docker_img.sh
+docker-compose up
 ```
 
 #### Start a client

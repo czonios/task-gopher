@@ -34,10 +34,6 @@ var serveCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		port := os.Getenv("PORT")
-		addr := os.Getenv("ADDRESS")
-		if port == "" || addr == "" {
-			log.Fatalf("Environment variables not set!")
-		}
 		serve(port)
 	},
 }
