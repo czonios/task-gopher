@@ -12,9 +12,10 @@ This project is a CLI task manager/todo application, with a web server built usi
 It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination of the implementation from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
 
 The differences with TaskCLI, at a glance:
-- implemented a server for remotely accessing the tasks
+- implemented an [Echo][echo] server for remotely accessing the tasks
+- added [Docker](https://docs.docker.com/get-docker/) containers with build and run scripts for the app
 - added an optional description to the tasks
-- implemented a `deldb` command to clear the database of tasks, that cannot be run remotely
+- implemented a `deldb` CLI command to clear the database of tasks, that cannot be run remotely
 
 ## Setup
 
