@@ -1,0 +1,12 @@
+services:
+    app:
+        build:
+            context: ..
+            dockerfile: ./build/Dockerfile
+            tags:
+                - "czonios/task-gopher/server:latest"
+        container_name: task-gopher-server
+        env_file: ../.env
+        ports:
+            - 8334:8334
+        tty: true

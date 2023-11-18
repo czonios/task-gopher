@@ -34,11 +34,18 @@ var serveCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		port := os.Getenv("PORT")
-		addr := os.Getenv("ADDRESS")
-		if port == "" || addr == "" {
-			log.Fatalf("Environment variables not set!")
-		}
 		serve(port)
+	},
+}
+
+var desktopCmd = &cobra.Command{
+	Use:     "gui",
+	Aliases: []string{"app", "desktop"},
+	Short:   "start a GUI client",
+	Args:    cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Fatalln("Not implemented yet!")
+		// startGUI()
 	},
 }
 
@@ -417,4 +424,5 @@ func init() {
 	rootCmd.AddCommand(kanbanCmd)
 	rootCmd.AddCommand(dropDBCmd)
 	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(desktopCmd)
 }
