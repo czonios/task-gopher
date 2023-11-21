@@ -40,9 +40,9 @@ import (
 
 const dbFname = "tasks.db"
 
-// var homeDir, _ = os.UserHomeDir()
-// var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
-var projectDir = "."
+var homeDir, _ = os.UserHomeDir()
+var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
+//var projectDir = "."
 var _ = os.Mkdir(projectDir, os.ModePerm)
 
 type status int
