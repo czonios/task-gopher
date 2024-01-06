@@ -28,7 +28,7 @@ The differences with TaskCLI, at a glance:
 #### Clone repository
 Clone this repo - we use the Go convention of holding packages from GitHub in `$HOME/go/src/github.com/<username>/<package>`:
 ```sh
-git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios
+git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios/task-gopher
 ```
 
 #### Set environment variables
