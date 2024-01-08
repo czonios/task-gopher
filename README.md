@@ -1,4 +1,5 @@
 # Task Gopher
+
 > A CLI task management tool with remote access capabilities.
 
 ![Build](https://github.com/czonios/task-gopher/actions/workflows/go.yml/badge.svg)
@@ -12,6 +13,7 @@ This project is a CLI task manager/todo application, with a web server built usi
 It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination of the implementation from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
 
 The differences with TaskCLI, at a glance:
+
 - implemented an [Echo][echo] server for remotely accessing the tasks
 - added [Docker](https://docs.docker.com/get-docker/) containers with build and run scripts for the app
 - added an optional description to the tasks
@@ -20,13 +22,17 @@ The differences with TaskCLI, at a glance:
 ## Setup
 
 ### Requirements
+
 - [Go](https://go.dev/learn/): the Go language, use `go version` command to check if it is installed. This has been tested on `go1.21.4`. If you use Docker, you don't need to install it.
 - (optional) [Docker](https://docs.docker.com/get-docker/): if you prefer to run the app in a container, scripts are included for building and running the app in a Docker container
 - (optional) Server node: If you want to have a task-gopher server that you can access from other devices, then I suggest using [ZeroTier][zerotier], which allows you to add devices to a virtual network so you can view them as if they are on your local network, with static IP addresses, as long as they are connected to the internet. I prefer it because it is simple, open source, and free for personal use.
 
 ### Build and run
+
 #### Clone repository
+
 Clone this repo - we use the Go convention of holding packages from GitHub in `$HOME/go/src/github.com/<username>/<package>`:
+
 ```sh
 git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czonios/task-gopher
 ```
@@ -34,13 +40,16 @@ git clone https://github.com/czonios/task-gopher.git $HOME/go/src/github.com/czo
 #### Set environment variables
 
 The application tries to read a `.env` file in the root directory of the project and load the environment variables it contains. The `.env` file is optional, but the following environment variables must be set:
+
 - `ADDRESS` the address of the server
 - `PORT` the port the server runs on
 
 #### Start the server
+
 The following commands start the task-gopher server (on the device that will hold the database). Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `.env` for this to work! Since this is the server instance, you can use `http://localhost` for the `ADDRESS`.
 
 ##### Option 1: using Go
+
 ```sh
 # cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
@@ -51,6 +60,7 @@ task-gopher serve
 ```
 
 ##### Option 2: using Docker
+
 ```sh
 # cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
@@ -59,10 +69,12 @@ docker-compose up
 ```
 
 #### Start a client
+
 The client can be either in the same machine as the server, or in any other machine that can ping the server.
 Don't forget to set the `ADDRESS` and `PORT` of the server as environment variables in `$HOME/go/src/github.com/czonios/task-gopher/.env` for this to work!
 
 ##### Option 1: using Go
+
 ```sh
 # cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
@@ -73,6 +85,7 @@ task-gopher --help # will list available commands
 ```
 
 ##### Option 2: using Docker
+
 ```sh
 # coming soon!
 ```
@@ -127,21 +140,20 @@ go test ./...
 ## Next steps
 
 ### Docker containers
-- [x] make server container
-- [ ] make app container
+
+- [x] server container
+- [ ] app container
 - [ ] documentation for containers
 
 ### Tests
+
 - [x] `task-gopher.go`
 - [ ] `server.go`
 
 ### Mobile app
+
 - [ ] create basic mobile app using [Go app][gomobile] or [Fyne][fyne] or [Wails][wails]
 
-[lipgloss]: https://github.com/charmbracelet/lipgloss
-[charm]: https://github.com/charmbracelet/charm
-[cobra]: https://github.com/spf13/cobra
-[kanban-video]: https://www.youtube.com/watch?v=ZA93qgdLUzM&list=PLLLtqOZfy0pcFoSIeGXO-SOaP9qLqd_H6
 [fyne]: https://fyne.io/
 [wails]: https://wails.io/
 [gomobile]: https://pkg.go.dev/golang.org/x/mobile/app
