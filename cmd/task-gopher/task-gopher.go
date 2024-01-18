@@ -42,7 +42,8 @@ const dbFname = "tasks.db"
 
 var homeDir, _ = os.UserHomeDir()
 var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
-//var projectDir = "."
+
+// var projectDir = "."
 var _ = os.Mkdir(projectDir, os.ModePerm)
 
 type status int
@@ -52,6 +53,7 @@ const (
 	todo status = iota
 	inProgress
 	done
+	invalidStatus
 )
 
 func (s status) String() string {
@@ -113,7 +115,7 @@ func (orig *Task) merge(t Task) {
 			if v, ok := uField.(string); ok && uField != "" {
 				oValues.Field(i).SetString(v)
 			}
-			if v, ok := uField.(status); ok && uField != todo {
+			if v, ok := uField.(status); ok && uField != invalidStatus {
 				oValues.Field(i).SetInt(int64(v))
 			}
 		}

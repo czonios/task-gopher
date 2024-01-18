@@ -118,8 +118,10 @@ var updateCmd = &cobra.Command{
 			status = inProgress
 		case int(done):
 			status = done
-		default:
+		case int(todo):
 			status = todo
+		default:
+			status = invalidStatus
 		}
 
 		// JSON body

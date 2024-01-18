@@ -81,7 +81,7 @@ cd $HOME/go/src/github.com/czonios/task-gopher
 go install ./...
 task-gopher --help # will list available commands
 # NOTE: $HOME/go/bin should be in your PATH
-# otherwise you can run go run ./... serve
+# otherwise you can run go run ./... --help
 ```
 
 ##### Option 2: using Docker
