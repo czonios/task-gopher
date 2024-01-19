@@ -65,18 +65,20 @@ func TestAddTask(t *testing.T) {
 			Tag:    "tag",
 			Desc:   "desc",
 			Status: inProgress,
+			Type:   daily,
 		}, Task{
 			Name:   "full",
 			Tag:    "tag",
 			Desc:   "desc",
 			Status: inProgress,
+			Type:   daily,
 		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db = setupTests()
 			defer teardownTests(db)
-			id, err := addTask(db, tt.input.Name, tt.input.Desc, tt.input.Status, tt.input.Tag)
+			id, err := addTask(db, tt.input.Name, tt.input.Desc, tt.input.Status, tt.input.Type, tt.input.Tag)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -116,7 +118,7 @@ func TestEditTask(t *testing.T) {
 			db = setupTests()
 			defer teardownTests(db)
 			// put task in db
-			id, err := addTask(db, "test", "", todo, "")
+			id, err := addTask(db, "test", "", todo, generic, "")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -158,7 +160,7 @@ func TestDelTask(t *testing.T) {
 			db = setupTests()
 			defer teardownTests(db)
 			// put task in db
-			id, err := addTask(db, "test", "", todo, "")
+			id, err := addTask(db, "test", "", todo, generic, "")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -205,6 +207,7 @@ func setupTests() *sql.DB {
                 "name" TEXT NOT NULL,
                 "description" TEXT,
                 "status" INTEGER,
+                "type" INTEGER,
                 "created" TEXT,
                 "tag" TEXT
             );

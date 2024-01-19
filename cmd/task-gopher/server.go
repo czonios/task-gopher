@@ -87,14 +87,30 @@ func handleAddTask(c echo.Context) error {
 	desc := body["Desc"].(string)
 	tag := body["Tag"].(string)
 	completed := body["Status"].(string)
+	type_s := body["Type"].(string)
+
 	var status status
 	switch completed {
+	case todo.String():
+		status = todo
 	case inProgress.String():
 		status = inProgress
 	case done.String():
 		status = done
 	default:
-		status = todo
+		status = invalidStatus
+	}
+
+	var type_t task_type
+	switch type_s {
+	case todo.String():
+		type_t = generic
+	case inProgress.String():
+		type_t = daily
+	case done.String():
+		type_t = habit
+	default:
+		type_t = invalidType
 	}
 
 	if name == "" {
@@ -102,7 +118,7 @@ func handleAddTask(c echo.Context) error {
 	}
 
 	// create task
-	id, err := addTask(db, name, desc, status, tag)
+	id, err := addTask(db, name, desc, status, type_t, tag)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not create task")
 	}
@@ -138,6 +154,7 @@ func handleUpdateTask(c echo.Context) error {
 	desc := body["Desc"].(string)
 	tag := body["Tag"].(string)
 	completed := body["Status"].(string)
+	type_s := body["Type"].(string)
 
 	var status status
 	switch completed {
@@ -151,8 +168,20 @@ func handleUpdateTask(c echo.Context) error {
 		status = invalidStatus
 	}
 
+	var type_t task_type
+	switch type_s {
+	case todo.String():
+		type_t = generic
+	case inProgress.String():
+		type_t = daily
+	case done.String():
+		type_t = habit
+	default:
+		type_t = invalidType
+	}
+
 	// update task
-	newTask := Task{int64(id), name, desc, status, time.Now(), tag}
+	newTask := Task{int64(id), name, desc, status, type_t, time.Now(), tag}
 	err = editTask(db, newTask)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not update task")

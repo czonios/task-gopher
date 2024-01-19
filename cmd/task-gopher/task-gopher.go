@@ -46,9 +46,9 @@ var projectDir = homeDir + "/go/src/github.com/czonios/task-gopher"
 // var projectDir = "."
 var _ = os.Mkdir(projectDir, os.ModePerm)
 
+// status enum
 type status int
 
-// status enum
 const (
 	todo status = iota
 	inProgress
@@ -60,12 +60,27 @@ func (s status) String() string {
 	return [...]string{"todo", "in progress", "done", "invalid"}[s]
 }
 
+// task type enum
+type task_type int
+
+const (
+	generic task_type = iota
+	daily
+	habit
+	invalidType
+)
+
+func (s task_type) String() string {
+	return [...]string{"generic", "daily", "habit", "invalid"}[s]
+}
+
 // A Task is the representation of a task
 type Task struct {
 	ID      int64     // unique task ID
 	Name    string    // task title
 	Desc    string    // optional description
 	Status  status    // the status, one of {todo, in progress, done}
+	Type    task_type // the type of the task, one of {generic, daily, habit}
 	Created time.Time // timestamp of when the task was created
 	Tag     string    // optional tag for the task
 }
@@ -118,6 +133,9 @@ func (orig *Task) merge(t Task) {
 			if v, ok := uField.(status); ok && uField != invalidStatus {
 				oValues.Field(i).SetInt(int64(v))
 			}
+			if v, ok := uField.(task_type); ok && uField != invalidType {
+				oValues.Field(i).SetInt(int64(v))
+			}
 		}
 	}
 
@@ -167,6 +185,7 @@ func createDB(args ...bool) *sql.DB {
                 "name" TEXT NOT NULL,
                 "description" TEXT,
                 "status" INTEGER,
+				"type" INTEGER,
                 "created" TEXT,
                 "tag" TEXT
             );
@@ -179,12 +198,12 @@ func createDB(args ...bool) *sql.DB {
 }
 
 // addTask inserts a task into the database
-func addTask(db *sql.DB, name string, description string, completed status, tag string) (int64, error) {
+func addTask(db *sql.DB, name string, description string, completed status, t_type task_type, tag string) (int64, error) {
 	sqlStatement := `
         INSERT INTO 
-            tasks(id, name, description, status, tag, created) 
-            values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?);`
-	res, err := db.Exec(sqlStatement, name, description, completed, tag, time.Now().Format(time.RFC3339))
+            tasks(id, name, description, status, type, tag, created) 
+            values ((SELECT MAX(id) FROM tasks LIMIT 1) + 1, ?, ?, ?, ?, ?, ?);`
+	res, err := db.Exec(sqlStatement, name, description, completed, t_type, tag, time.Now().Format(time.RFC3339))
 	if err != nil {
 		return 0, err
 	}
@@ -222,10 +241,11 @@ func editTask(db *sql.DB, task Task) error {
             name = ?,
             description = ?,
             status = ?,
+            type = ?,
             tag = ?,
             created = ?
         WHERE id = ?;`
-	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Tag, orig.Created.Format(time.RFC3339), orig.ID)
+	res, err := db.Exec(updateStatement, orig.Name, orig.Desc, orig.Status, orig.Type, orig.Tag, orig.Created.Format(time.RFC3339), orig.ID)
 	if err != nil {
 		return err
 	}
@@ -237,7 +257,7 @@ func editTask(db *sql.DB, task Task) error {
 func row2Task(rows *sql.Rows) (Task, error) {
 	var task Task
 	var timestr string
-	var err = rows.Scan(&task.ID, &task.Name, &task.Desc, &task.Status, &task.Tag, &timestr)
+	var err = rows.Scan(&task.ID, &task.Name, &task.Desc, &task.Status, &task.Type, &task.Tag, &timestr)
 	if err != nil {
 		return Task{}, err
 	}
@@ -251,7 +271,7 @@ func row2Task(rows *sql.Rows) (Task, error) {
 // getTask returns the task with a given id
 func getTask(db *sql.DB, id int64) (Task, error) {
 	var row, err = db.Query(`
-        SELECT id, name, description, status, tag, created 
+        SELECT id, name, description, status, type, tag, created 
         FROM tasks WHERE id = ?
         LIMIT 1
     `, id)
@@ -271,7 +291,7 @@ func getTask(db *sql.DB, id int64) (Task, error) {
 func getTasks(db *sql.DB) ([]Task, error) {
 	// get tasks
 	rows, err := db.Query(`
-        SELECT id, name, description, status, tag, created
+        SELECT id, name, description, status, type, tag, created
         FROM tasks
         ORDER BY created ASC;
     `)
