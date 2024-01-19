@@ -399,7 +399,7 @@ func init() {
 		"status",
 		"s",
 		int(invalidStatus),
-		"specify a completion status for your task (1/2/3 for todo/in progress/done)",
+		"specify a completion status for your task (0/1/2 for todo/in progress/done)",
 	)
 	// add all commands
 	rootCmd.AddCommand(addCmd)
