@@ -166,13 +166,14 @@ func main() {
 // Return type: error
 func checkDayStart(db *sql.DB) error {
 	now := time.Now().UTC()
-	prevDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, now.Location())
+	prevDay := time.Date(now.Year(), now.Month(), now.Day(), 5, 0, 0, 0, now.Location())
 	// runs every 10 seconds
 	for range time.Tick(time.Second * 10) {
 		// check if it is a new day (after 6am)
 		now := time.Now().UTC()
 		startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, now.Location())
 		if now.After(startOfDay) && startOfDay.After(prevDay) {
+			fmt.Println("Time to reset dailies!")
 			prevDay = startOfDay
 			// impl new day logic (daily tasks should reset to todo status)
 			err := resetDailyTasks(db)

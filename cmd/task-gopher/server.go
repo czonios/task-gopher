@@ -105,11 +105,11 @@ func handleAddTask(c echo.Context) error {
 
 	var type_t task_type
 	switch type_s {
-	case todo.String():
+	case generic.String():
 		type_t = generic
-	case inProgress.String():
+	case daily.String():
 		type_t = daily
-	case done.String():
+	case habit.String():
 		type_t = habit
 	default:
 		type_t = invalidType
@@ -172,11 +172,11 @@ func handleUpdateTask(c echo.Context) error {
 
 	var type_t task_type
 	switch type_s {
-	case todo.String():
+	case generic.String():
 		type_t = generic
-	case inProgress.String():
+	case daily.String():
 		type_t = daily
-	case done.String():
+	case habit.String():
 		type_t = habit
 	default:
 		type_t = invalidType
