@@ -60,8 +60,9 @@ var addCmd = &cobra.Command{
 			"Name": "%v",
 			"Desc": "%v",
 			"Status": "%v",
+			"Type": "%v",
 			"Tag": "%v"
-		}`, args[0], description, todo, tag))
+		}`, args[0], description, todo, generic, tag))
 
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
@@ -370,6 +371,12 @@ func tasksToItems(tasks []Task) []list.Item {
 
 func init() {
 	// add cmd flags
+	addCmd.Flags().StringP(
+		"tag",
+		"t",
+		"",
+		"specify a tag for your task",
+	)
 	addCmd.Flags().StringP(
 		"description",
 		"d",

@@ -24,6 +24,8 @@ func serve(port string) {
 	// create the server
 	e := echo.New()
 
+	go checkDayStart(db)
+
 	// set up routes
 	e.GET("/tasks", handleGetTasks)
 	e.POST("/tasks/add", handleAddTask)

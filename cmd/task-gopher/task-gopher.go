@@ -158,6 +158,74 @@ func main() {
 
 }
 
+// checkDayStart checks if it is a new day (after 6am) and runs the new day logic.
+//
+// Parameters:
+// - db: the database connection (*sql.DB)
+//
+// Return type: error
+func checkDayStart(db *sql.DB) error {
+	now := time.Now().UTC()
+	prevDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, now.Location())
+	// runs every 10 seconds
+	for range time.Tick(time.Second * 10) {
+		// check if it is a new day (after 6am)
+		now := time.Now().UTC()
+		startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, now.Location())
+		if now.After(startOfDay) && startOfDay.After(prevDay) {
+			prevDay = startOfDay
+			// impl new day logic (daily tasks should reset to todo status)
+			err := resetDailyTasks(db)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func resetDailyTasks(db *sql.DB) error {
+	// Get all tasks with Type daily
+	dailyTasks, err := getTasksByType(db, daily)
+	if err != nil {
+		return err
+	}
+	// Reset the status of each daily task to "todo"
+	for _, task := range dailyTasks {
+		task.Status = todo
+		editTask(db, task)
+	}
+	return nil
+}
+
+func getTasksByType(db *sql.DB, taskType task_type) ([]Task, error) {
+	// get tasks by type
+	rows, err := db.Query(`
+        SELECT id, name, description, status, type, tag, created
+        FROM tasks
+		WHERE type = ?
+        ORDER BY created ASC;
+    `, taskType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks = []Task{}
+
+	// print tasks
+	for rows.Next() {
+		task, err := row2Task(rows)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+
+	err = rows.Err()
+	return tasks, err
+}
+
 // createDB returns an opened SQLite database that can be used to run queries
 // It creates the directory and the db file, if they don't exist
 func createDB(args ...bool) *sql.DB {
