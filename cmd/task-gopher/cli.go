@@ -130,8 +130,9 @@ var updateCmd = &cobra.Command{
 			"Name": "%v",
 			"Desc": "%v",
 			"Status": "%v",
+			"Type": "%v",
 			"Tag": "%v"
-		}`, name, description, status, tag))
+		}`, name, description, status, generic, tag))
 
 		addr := os.Getenv("ADDRESS")
 		port := os.Getenv("PORT")
