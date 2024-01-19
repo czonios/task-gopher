@@ -57,7 +57,7 @@ const (
 )
 
 func (s status) String() string {
-	return [...]string{"todo", "in progress", "done"}[s]
+	return [...]string{"todo", "in progress", "done", "invalid"}[s]
 }
 
 // A Task is the representation of a task
@@ -120,6 +120,7 @@ func (orig *Task) merge(t Task) {
 			}
 		}
 	}
+
 }
 
 func main() {
@@ -208,6 +209,7 @@ func delTask(db *sql.DB, id int64) error {
 func editTask(db *sql.DB, task Task) error {
 	// get existing task
 	var orig, err = getTask(db, task.ID)
+
 	if err != nil {
 		return err
 	}

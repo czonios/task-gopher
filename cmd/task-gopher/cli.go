@@ -371,12 +371,6 @@ func tasksToItems(tasks []Task) []list.Item {
 func init() {
 	// add cmd flags
 	addCmd.Flags().StringP(
-		"tag",
-		"t",
-		"",
-		"specify a tag for your task",
-	)
-	addCmd.Flags().StringP(
 		"description",
 		"d",
 		"",
@@ -404,8 +398,8 @@ func init() {
 	updateCmd.Flags().IntP(
 		"status",
 		"s",
-		int(todo),
-		"specify a completion status for your task (0/1/2 for todo/in progress/done)",
+		int(invalidStatus),
+		"specify a completion status for your task (1/2/3 for todo/in progress/done)",
 	)
 	// add all commands
 	rootCmd.AddCommand(addCmd)

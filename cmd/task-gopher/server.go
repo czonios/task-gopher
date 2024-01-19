@@ -141,14 +141,14 @@ func handleUpdateTask(c echo.Context) error {
 
 	var status status
 	switch completed {
-	case invalidStatus.String():
-		status = invalidStatus
+	case todo.String():
+		status = todo
 	case inProgress.String():
 		status = inProgress
 	case done.String():
 		status = done
 	default:
-		status = todo
+		status = invalidStatus
 	}
 
 	// update task

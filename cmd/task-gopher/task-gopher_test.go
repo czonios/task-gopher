@@ -22,7 +22,7 @@ func TestMerge(t *testing.T) {
 				Name:    "name",
 				Tag:     "",
 				Desc:    "test",
-				Status:  todo,
+				Status:  invalidStatus,
 				Created: time.Date(2023, 11, 18, 7, 43, 34, 1, time.UTC),
 			},
 			old: Task{
@@ -107,7 +107,8 @@ func TestEditTask(t *testing.T) {
 	}{
 		{"edit name", Task{Name: "test2"}, Task{Name: "test2", Status: todo}},
 		{"edit tag", Task{Tag: "x"}, Task{Name: "test", Tag: "x", Status: todo}},
-		{"edit status", Task{Status: inProgress}, Task{Name: "test", Status: inProgress}},
+		{"edit status to inProgress", Task{Status: inProgress}, Task{Name: "test", Status: inProgress}},
+		{"edit status to todo", Task{Status: todo}, Task{Name: "test", Status: todo}},
 		{"edit description", Task{Desc: "asdf"}, Task{Name: "test", Status: todo, Desc: "asdf"}},
 	}
 	for _, tt := range tests {

@@ -65,7 +65,7 @@ task-gopher serve
 # cd to root directory of project
 cd $HOME/go/src/github.com/czonios/task-gopher
 cd build
-docker-compose up
+docker compose up
 ```
 
 #### Start a client
