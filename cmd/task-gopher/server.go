@@ -28,6 +28,7 @@ func serve(port string) {
 
 	// set up routes
 	e.GET("/tasks", handleGetTasks)
+	e.GET("/tasks/:id", handleGetTask)
 	e.POST("/tasks/add", handleAddTask)
 	e.PUT("/tasks/:id", handleUpdateTask)
 	e.DELETE("/tasks/:id", handleDeleteTask)
@@ -54,6 +55,21 @@ func handleGetTasks(c echo.Context) error {
 	tasks, err := getTasks(db)
 	if err != nil {
 		return err
+	}
+	return c.JSON(http.StatusOK, tasks)
+}
+
+// handleGetTasks fetches a task from the database by ID and returns it in JSON form in the response
+func handleGetTask(c echo.Context) error {
+	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Invalid task id")
+	}
+	tasks, err := getTask(db, id)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Could not fetch task "+fmt.Sprint(id))
 	}
 	return c.JSON(http.StatusOK, tasks)
 }
