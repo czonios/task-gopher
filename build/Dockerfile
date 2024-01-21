@@ -3,8 +3,8 @@ FROM golang:1.21 AS build-stage
 WORKDIR /app
 
 COPY go.mod .
-COPY ./cmd/task-gopher/*.go .
-COPY ./data/tasks.db ./data/
+COPY ./cmd/task-gopher/*.go ./
+COPY ./data/* ./data/
 
 RUN go get
 RUN go build -o bin ./...
