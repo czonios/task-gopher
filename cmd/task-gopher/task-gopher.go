@@ -128,6 +128,9 @@ func (orig *Task) merge(t Task) {
 				oValues.Field(i).SetInt(v)
 			}
 			if v, ok := uField.(string); ok && uField != "" {
+				if uField == " " {
+					v = ""
+				}
 				oValues.Field(i).SetString(v)
 			}
 			if v, ok := uField.(status); ok && uField != invalidStatus {
