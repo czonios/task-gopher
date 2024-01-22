@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 var db *sql.DB
@@ -23,8 +24,22 @@ func serve(port string) {
 
 	// create the server
 	e := echo.New()
+	// e.Pre(middleware.HTTPSRedirect())
 
-	go checkDayStart(db)
+	// set up middleware
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogRemoteIP: true,
+		LogHost:     true,
+		LogMethod:   true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			log.Printf("%v %v from %v. Status: %v\n", v.Method, v.URI, v.RemoteIP, v.Status)
+			return nil
+		},
+	}))
+	e.Use(middleware.Recover())
+	e.Use(middleware.Secure())
 
 	// set up routes
 	e.GET("/tasks", handleGetTasks)
@@ -32,6 +47,9 @@ func serve(port string) {
 	e.POST("/tasks/add", handleAddTask)
 	e.PUT("/tasks/:id", handleUpdateTask)
 	e.DELETE("/tasks/:id", handleDeleteTask)
+
+	// Goroutine for checking new day start
+	go checkDayStart(db)
 
 	// start on port
 	e.Logger.Fatal(e.Start(":" + port))
@@ -51,7 +69,7 @@ func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 
 // handleGetTasks fetches all tasks from the database and returns them in JSON form in the response
 func handleGetTasks(c echo.Context) error {
-	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	// log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	tasks, err := getTasks(db)
 	if err != nil {
 		return err
@@ -61,7 +79,7 @@ func handleGetTasks(c echo.Context) error {
 
 // handleGetTasks fetches a task from the database by ID and returns it in JSON form in the response
 func handleGetTask(c echo.Context) error {
-	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	// log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -76,7 +94,7 @@ func handleGetTask(c echo.Context) error {
 
 // handleDeleteTask deletes a task from the database and returns its id
 func handleDeleteTask(c echo.Context) error {
-	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	// log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -92,7 +110,7 @@ func handleDeleteTask(c echo.Context) error {
 // handleAddTask adds a task to the database
 // It gets the task data from the request body in JSON form
 func handleAddTask(c echo.Context) error {
-	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	// log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	body, err := getJSONRawBody(c)
 
 	if err != nil {
@@ -153,7 +171,7 @@ func handleAddTask(c echo.Context) error {
 // handleUpdateTask updates a task in the database by its id
 // The id is given in the request parameters and the changed values are given in the request body
 func handleUpdateTask(c echo.Context) error {
-	log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
+	// log.Println(c.Request().RemoteAddr+":", c.Request().Method, c.Request().RequestURI)
 	body, err := getJSONRawBody(c)
 
 	if err != nil {
