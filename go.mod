@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/kancli v0.0.0-20230629174247-b2093471047b
 	github.com/charmbracelet/lipgloss v0.9.1
+	github.com/gorilla/websocket v1.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.3
 	github.com/mattn/go-sqlite3 v1.14.18

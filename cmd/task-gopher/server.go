@@ -9,11 +9,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 var db *sql.DB
+var (
+	upgrader = websocket.Upgrader{}
+)
 
 // serve starts an echo server
 // It opens the SQLite database and sets up the accepted routes
@@ -65,6 +69,32 @@ func getJSONRawBody(c echo.Context) (map[string]interface{}, error) {
 	}
 
 	return jsonBody, nil
+}
+
+// handleWebsocket handles the WebSocket connection.
+func handleWebsocket(c echo.Context) error {
+	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		return err
+	}
+	defer ws.Close()
+
+	for {
+		// Write
+		err := ws.WriteMessage(websocket.TextMessage, []byte("Websocket connected!"))
+		if err != nil {
+			c.Logger().Error(err)
+		}
+
+		// Read
+		_, msg, err := ws.ReadMessage()
+		if err != nil {
+			c.Logger().Error(err)
+		}
+		log.Printf("Received message from socket: %s\n", msg)
+		// TODO handle message
+		// TODO keep list of connections (and add/remove from them)
+	}
 }
 
 // handleGetTasks fetches all tasks from the database and returns them in JSON form in the response
