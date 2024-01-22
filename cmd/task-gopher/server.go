@@ -18,6 +18,7 @@ var db *sql.DB
 var (
 	upgrader = websocket.Upgrader{}
 )
+var clients = make(map[*websocket.Conn]bool)
 
 // serve starts an echo server
 // It opens the SQLite database and sets up the accepted routes
@@ -51,6 +52,7 @@ func serve(port string) {
 	e.POST("/tasks/add", handleAddTask)
 	e.PUT("/tasks/:id", handleUpdateTask)
 	e.DELETE("/tasks/:id", handleDeleteTask)
+	e.GET("/ws", handleWebsocket)
 
 	// Goroutine for checking new day start
 	go checkDayStart(db)
@@ -77,24 +79,49 @@ func handleWebsocket(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer ws.Close()
+	// remove connection from list of connections and close it when done
+	defer func() {
+		delete(clients, ws)
+		ws.Close()
+	}()
+
+	err = manageConnections(ws) // keep list of connections
+	if err != nil {
+		c.Logger().Error(err)
+	}
+
+	// Write hello message
+	err = ws.WriteMessage(websocket.TextMessage, []byte("Websocket connected!"))
+	if err != nil {
+		c.Logger().Error(err)
+	}
 
 	for {
-		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Websocket connected!"))
-		if err != nil {
-			c.Logger().Error(err)
-		}
-
-		// Read
+		// Read message
 		_, msg, err := ws.ReadMessage()
 		if err != nil {
 			c.Logger().Error(err)
 		}
-		log.Printf("Received message from socket: %s\n", msg)
-		// TODO handle message
-		// TODO keep list of connections (and add/remove from them)
+		err = handleMessage(ws, msg) // handle message
+		if err != nil {
+			c.Logger().Error(err)
+		}
 	}
+}
+
+// handleMessage handles an incoming (through websocket) message
+func handleMessage(ws *websocket.Conn, msg []byte) error {
+	log.Printf("Received message from socket: %s\n", msg)
+	//TODO implement message handling logic
+	// should notify all clients that a change was made?
+	return nil
+}
+
+// manageConnections manages the list of websocket connections
+func manageConnections(ws *websocket.Conn) error {
+	log.Println("WS connection from", ws.RemoteAddr().String())
+	clients[ws] = true
+	return nil
 }
 
 // handleGetTasks fetches all tasks from the database and returns them in JSON form in the response
