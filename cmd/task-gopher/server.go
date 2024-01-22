@@ -112,8 +112,34 @@ func handleWebsocket(c echo.Context) error {
 // handleMessage handles an incoming (through websocket) message
 func handleMessage(ws *websocket.Conn, msg []byte) error {
 	log.Printf("Received message from socket: %s\n", msg)
-	//TODO implement message handling logic
-	// should notify all clients that a change was made?
+
+	// Unmarshal JSON
+	var result map[string]interface{}
+	jsonString := string(msg)
+	err := json.Unmarshal([]byte(jsonString), &result)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	// for key, value := range result {
+	// 	log.Println(key, ":", value)
+	// }
+	if result["action"] == "update" {
+		// Notify all other clients that a change was made
+		log.Println("MUST UPDATE ALL CLIENTS!")
+
+		// Send message to all clients
+		var update_msg = "UPDATE"
+		for client := range clients {
+			err := client.WriteMessage(websocket.TextMessage, []byte(update_msg))
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+	}
+
 	return nil
 }
 
