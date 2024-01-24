@@ -117,6 +117,12 @@ func sendUpdateSockets() {
 		// if client.RemoteAddr() == ip {
 		// 	continue
 		// }
+
+		if client.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(10*time.Second)) != nil {
+			delete(clients, client)
+			client.Close()
+		}
+
 		err := client.WriteMessage(websocket.TextMessage, []byte(update_msg))
 		if err != nil {
 			log.Println(err)
@@ -128,7 +134,7 @@ func sendUpdateSockets() {
 func handleMessage(ws *websocket.Conn, msg []byte) error {
 
 	// ping connection, close if no response
-	if ws.WriteControl(websocket.PingMessage, msg, time.Now().Add(10*time.Second)) != nil {
+	if ws.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(10*time.Second)) != nil {
 		return nil
 		// delete(clients, ws)
 		// ws.Close()
