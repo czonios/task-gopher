@@ -183,6 +183,7 @@ func checkDayStart(db *sql.DB) error {
 			if err != nil {
 				return err
 			}
+			sendUpdateSockets()
 		}
 	}
 	return nil

@@ -10,14 +10,15 @@
 </p>
 
 This project is a CLI task manager/todo application, with a web server built using [Echo][echo], and an SQLite database to hold the task data.
-It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination of the implementation from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
+It is built as a reimplementaion and continuation of [TaskCLI](https://github.com/charmbracelet/taskcli/tree/main) which itself is inspired by [Task Warrior](https://taskwarrior.org/). It is not a fork, but rather a reimagination from scratch. Some components have been copied (e.g. the CLI Kanban command and helper functions). After the initial implementation, some conventions from the TaskCLI were used (e.g. using a `status` enum, instead of a bool (todo/done) used originally) when they were more convenient than the original implementation.
 
 The differences with TaskCLI, at a glance:
 
-- implemented an [Echo][echo] server for remotely accessing the tasks
+- implemented an [Echo][echo] server for remotely accessing the tasks (multiple clients)
+- implemented updating all clients through [Gorilla WebSocket](https://github.com/gorilla/websocket)
 - added [Docker](https://docs.docker.com/get-docker/) containers with build and run scripts for the app
-- added an optional description to the tasks
-- implemented a `deldb` CLI command to clear the database of tasks, that cannot be run remotely
+- added optional extra functionality such as a `task_type` enum and `description` fields to the tasks
+- implemented an extra CLI command, `deldb`, to clear the database of tasks
 
 ## Setup
 

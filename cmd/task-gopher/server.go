@@ -126,6 +126,14 @@ func sendUpdateSockets() {
 
 // handleMessage handles an incoming (through websocket) message
 func handleMessage(ws *websocket.Conn, msg []byte) error {
+
+	// ping connection, close if no response
+	if ws.WriteControl(websocket.PingMessage, msg, time.Now().Add(10*time.Second)) != nil {
+		return nil
+		// delete(clients, ws)
+		// ws.Close()
+	}
+
 	log.Printf("Received message from socket: %s\n", msg)
 
 	// Unmarshal JSON
