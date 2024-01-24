@@ -109,6 +109,21 @@ func handleWebsocket(c echo.Context) error {
 	}
 }
 
+func sendUpdateSockets() {
+	// Notify all clients that a change was made
+	var update_msg = "UPDATE"
+	for client := range clients {
+		// // Don't update the client that sent the message
+		// if client.RemoteAddr() == ip {
+		// 	continue
+		// }
+		err := client.WriteMessage(websocket.TextMessage, []byte(update_msg))
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
 // handleMessage handles an incoming (through websocket) message
 func handleMessage(ws *websocket.Conn, msg []byte) error {
 	log.Printf("Received message from socket: %s\n", msg)
@@ -122,23 +137,13 @@ func handleMessage(ws *websocket.Conn, msg []byte) error {
 		log.Println(err)
 	}
 
+	log.Println(jsonString)
 	// for key, value := range result {
 	// 	log.Println(key, ":", value)
 	// }
-	if result["action"] == "update" {
-		// Notify all other clients that a change was made
-		log.Println("MUST UPDATE ALL CLIENTS!")
-
-		// Send message to all clients
-		var update_msg = "UPDATE"
-		for client := range clients {
-			err := client.WriteMessage(websocket.TextMessage, []byte(update_msg))
-			if err != nil {
-				log.Println(err)
-			}
-		}
-
-	}
+	// if result["action"] == "update" {
+	// 	return nil
+	// }
 
 	return nil
 }
@@ -187,6 +192,7 @@ func handleDeleteTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not delete task "+fmt.Sprint(id))
 	}
+	go sendUpdateSockets()
 	return c.String(http.StatusOK, fmt.Sprint(id))
 }
 
@@ -247,7 +253,7 @@ func handleAddTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not create task")
 	}
-
+	go sendUpdateSockets()
 	return c.JSON(http.StatusOK, task)
 }
 
@@ -305,5 +311,6 @@ func handleUpdateTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not update task")
 	}
+	go sendUpdateSockets()
 	return c.NoContent(http.StatusOK)
 }
