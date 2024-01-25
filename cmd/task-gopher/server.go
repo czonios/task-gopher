@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -26,6 +27,7 @@ func serve(port string) {
 	// create or open the database
 	db = createDB()
 	defer db.Close()
+	// log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// create the server
 	e := echo.New()
@@ -39,7 +41,7 @@ func serve(port string) {
 		LogHost:     true,
 		LogMethod:   true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			log.Printf("%v %v from %v. Status: %v\n", v.Method, v.URI, v.RemoteIP, v.Status)
+			log.Printf("%v %v. Status: %v\n", v.Method, v.URI, v.Status)
 			return nil
 		},
 	}))
@@ -100,7 +102,15 @@ func handleWebsocket(c echo.Context) error {
 		// Read message
 		_, msg, err := ws.ReadMessage()
 		if err != nil {
-			c.Logger().Error(err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Println("handleWebsocket: Client websocket disconnected")
+				log.Printf("error: %v", err)
+				return nil
+			}
+		}
+		if string(msg) == "" || string(msg) == " " {
+			log.Println("handleWebsocket: Client websocket sent empty message, exiting.")
+			return nil
 		}
 		err = handleMessage(ws, msg) // handle message
 		if err != nil {
@@ -109,16 +119,18 @@ func handleWebsocket(c echo.Context) error {
 	}
 }
 
-func sendUpdateSockets() {
+func sendUpdateSockets(ip string) {
 	// Notify all clients that a change was made
 	var update_msg = "UPDATE"
 	for client := range clients {
-		// // Don't update the client that sent the message
-		// if client.RemoteAddr() == ip {
-		// 	continue
-		// }
+		// Don't update the client that sent the message
+		//TODO what if there are two clients with the same IP? e.g. web and desktop
+		if strings.Split(client.RemoteAddr().String(), ":")[0] == strings.Split(ip, ":")[0] {
+			continue
+		}
 
 		if client.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(10*time.Second)) != nil {
+			log.Println("sendUpdateSockets: Client websocket disconnected")
 			delete(clients, client)
 			client.Close()
 		}
@@ -135,6 +147,7 @@ func handleMessage(ws *websocket.Conn, msg []byte) error {
 
 	// ping connection, close if no response
 	if ws.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(10*time.Second)) != nil {
+		log.Println("handleMessage: Client websocket disconnected")
 		return nil
 		// delete(clients, ws)
 		// ws.Close()
@@ -206,7 +219,7 @@ func handleDeleteTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not delete task "+fmt.Sprint(id))
 	}
-	go sendUpdateSockets()
+	go sendUpdateSockets(c.Request().RemoteAddr)
 	return c.String(http.StatusOK, fmt.Sprint(id))
 }
 
@@ -267,7 +280,7 @@ func handleAddTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not create task")
 	}
-	go sendUpdateSockets()
+	go sendUpdateSockets(c.Request().RemoteAddr)
 	return c.JSON(http.StatusOK, task)
 }
 
@@ -325,6 +338,6 @@ func handleUpdateTask(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Could not update task")
 	}
-	go sendUpdateSockets()
+	go sendUpdateSockets(c.Request().RemoteAddr)
 	return c.NoContent(http.StatusOK)
 }
