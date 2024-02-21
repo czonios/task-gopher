@@ -41,12 +41,16 @@ func serve(port string) {
 		LogHost:     true,
 		LogMethod:   true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			log.Printf("%v %v. Status: %v\n", v.Method, v.URI, v.Status)
+			log.Printf("%v %v from %v. Status: %v\n", v.Method, v.URI, v.RemoteIP, v.Status)
 			return nil
 		},
 	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 
 	// set up routes
 	e.GET("/tasks", handleGetTasks)
